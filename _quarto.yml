@@ -1,0 +1,31 @@
+project:
+  type: book
+
+book:
+  title: 'Amfiteatres romans'
+  author:
+    - name: 'Miquel Vàzquez-Santiago'
+      orcid: '0000-0002-9432-4297'
+      email: 'vazquez.miquel@gmail.com' 
+      github: 'mvazquezs' 
+  date: today
+  date-format: 'MMMM DD, YYYY'
+  chapters:
+    - index.qmd
+    - intro.qmd
+    - summary.qmd
+    - references.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme:
+      light: united
+    css: styles-tango.css
+  
+  # pdf:
+  #   documentclass: scrreprt
+
+editor: visual
+

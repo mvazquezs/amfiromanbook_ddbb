@@ -1,0 +1,47 @@
+### Ignora fitxers generats durant l'execució del codi
+## Arxius generats y temporals
+*.RData
+*.csv
+*.pdf
+
+## Fitxers de l'entorn de treball de R
+.Rproj.user/
+.Rhistory
+.RData
+.Rprofile
+.Rapp.history
+.Rcheckpoint/
+proves.R
+
+## Fitxers de gestors de paquets
+renv/
+renv.lock
+packrat/
+
+## Fitxers de documentació (com RMarkdown o Quarto)
+_bookdown_files/
+_main.Rmd
+_site/
+_book/
+_quarto/
+*.html
+*.json
+
+## Fitxers d'IDE
+.Rproj
+.Rhistory
+.RData
+.Rprofile
+.Rapp.history
+.vscode/
+.idea/
+.quarto/
+
+## Fitxers de sistemes operatius
+.DS_Store
+Thumbs.db
+
+## Fitxers de backup o temporals
+*~
+*.bak
+*.swp
