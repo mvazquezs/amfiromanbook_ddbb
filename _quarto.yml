@@ -12,9 +12,13 @@ book:
   date-format: 'MMMM DD, YYYY'
   chapters:
     - index.qmd
-    - intro.qmd
-    - summary.qmd
-    - references.qmd
+    - 01_abstract.qmd
+    - 02_introduccio.qmd
+    - 03_material_methods.qmd
+    - 04_resultats.qmd
+    - 05_conclusions.qmd
+    - references.bib  
+
 
 bibliography: references.bib
 
@@ -23,9 +27,10 @@ format:
     theme:
       light: united
     css: styles-tango.css
+    code-fold: true
+    code-summary: 'Hidden code'
   
   # pdf:
   #   documentclass: scrreprt
 
 editor: visual
-

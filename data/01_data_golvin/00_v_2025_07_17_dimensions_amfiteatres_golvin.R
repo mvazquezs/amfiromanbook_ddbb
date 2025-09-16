@@ -620,14 +620,13 @@ tableau_dimensions <- function(
   
       }
 
-      ### Argument 'filtrar_edifici'
-        if(!is.null(seleccionar_columnes)) {
+      ### Argument 'seleccionar_columnes'
+        if(!rlang::quo_is_null(seleccionar_columnes)) {
 
           l_tableau[[i]] <- l_tableau[[i]] %>%
             dplyr::select('index_id', 'nom', 'provincia_romana', 'pais', !!seleccionar_columnes)
 
         }
-    
     }
 
 ### Fusió de les dues taules per la columna 'nom' i 'original_id'

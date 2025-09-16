@@ -102,11 +102,11 @@ taules_dimensions <- function(
     clean_names = TRUE)
 
 ### Assignar noms de cada fitxer
-  names(l_data_vazquez) <- str_sub(
+  names(l_data_vazquez) <- stringr::str_sub(
     l_fitxers, 
     start = 37, 
     end = -5)
-
+    
   columnes_golvin <- c(
     'index_id', 'nom', 
     'amplada_arena', 'alcada_arena', 'amplada_general', 'alcada_general',
@@ -160,16 +160,16 @@ taules_dimensions <- function(
 
         l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>%
         dplyr::filter(
-          stringr::str_detect(pais, paste(pais, collapse = '|'))) %>%
+          stringr::str_detect(pais, paste(filtrar_pais, collapse = '|'))) %>%
           droplevels()
   
       }
     
 
-    ### Argument 'filtrar_edifici'
-      if(!is.null(seleccionar_columnes)) {
+    ### Argument 'seleccionar_columnes'
+      if(!rlang::quo_is_null(seleccionar_columnes)) {
 
-        l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>%
+        l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>% 
           dplyr::select('index_id', 'nom', 't_building', 'provincia_romana', 'pais', !!seleccionar_columnes)
 
       }
@@ -178,7 +178,7 @@ taules_dimensions <- function(
 ### 'bind_rows' de la llista
   df_data_vazquez <- data.table::rbindlist(l_data_vazquez) %>%
     tibble::as_tibble() %>%
-    dplyr::arrange('index_id', 'nom', 'provincia_romana', 'pais') 
+    dplyr::arrange(index_id, nom, provincia_romana, pais) 
     
 
   if (retornar_originals) {

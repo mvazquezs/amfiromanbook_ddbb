@@ -100,6 +100,8 @@ amphi_func.tab_summary <- function(
         distinct()
   }))
 
+  names(tab_bases) <- sel_vars_names
+
     ### 'stats_adicionals' argument
       if(isTRUE(stats_adicionals)){
 
@@ -115,9 +117,9 @@ amphi_func.tab_summary <- function(
                   q_lower = ~ quantile(., probs = q_lower, na.rm = na.rm),
                   sd_lower = ~ as.double(mean(., na.rm = na.rm) - sd_num * sd(., na.rm = na.rm)), 
                   sd_upper = ~ as.double(mean(., na.rm = na.rm) + sd_num * sd(., na.rm = na.rm)),
-                  q_upper = ~ quantile(., probs = q_upper, na.rm = na.rm)),
+                  q_upper = ~ quantile(., probs = q_upper, na.rm = na.rm),
                   kurt = ~ e1071::kurtosis(., na.rm = na.rm),
-                  skew = ~ e1071::skewness(., na.rm = na.rm)) %>%
+                  skew = ~ e1071::skewness(., na.rm = na.rm))) %>%
               as_tibble() %>%
               distinct()
         }))
@@ -145,21 +147,14 @@ amphi_func.tab_summary <- function(
             l_tab_all[[length(l_tab_all) + 1]] = tab_all
 
           }
-      }
-
-### noms
-  names(l_tab_all) <- sel_vars_names
-  names(tab_bases) <- sel_vars_names
-
-### Resultat final
-  if(isTRUE(stats_adicionals)) {
-
-    return(l_tab_all)
-
-  } else {
-    
-    return(tab_bases)
   
+  names(l_tab_all) <- sel_vars_names
+        
+  return(l_tab_all)
+      
+  } else {
+        
+  return(tab_bases)
   }
 }
 

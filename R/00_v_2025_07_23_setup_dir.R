@@ -47,7 +47,8 @@ amphi_tool.required_packages <- function(
 ### Llista de paquets a carregar
   l_paquets <- c(
     'dplyr', 'tibble', 'readxl', 'data.table', 'stringr',
-    'rlang', 'purrr', 'tidyr', 'missForest', 'psych')
+    'rlang', 'purrr', 'tidyr', 'missForest', 'psych',
+    'DT', 'gtsummary', 'gt')
 
 
 ### Carrega o instal·la paquets
@@ -67,5 +68,5 @@ amphi_tool.required_packages <- function(
 
 
 ### Evitar carrega de espai de treball
-	rm(list = ls(all = TRUE))
+### rm(list = ls(all = TRUE))
 }

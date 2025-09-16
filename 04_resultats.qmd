@@ -1,0 +1,80 @@
+# Resultats
+
+```{r setup, include = FALSE}
+# Aquest bloc de codi s'executa primer però no es mostra al document final.
+# S'encarrega de carregar totes les dades i preparar els objectes necessaris.
+
+# 1. Carreguem funcions i paquets
+source('R/00_v_2025_07_23_setup_dir.R')
+source('data/01_data_golvin/00_v_2025_07_17_dimensions_amfiteatres_golvin.R')
+source('data/02_data_vazquez/00_v_2025_07_23_dimensions_amfiteatres_vazquez.R')
+source('R/02_v_2025_08_23_tab_summary.R')
+
+amphi_tool.required_packages(
+  locale = 'es_ES.UTF-8',
+  update_packages = FALSE)
+
+# 2. Creem les matrius de dades
+df_golvin <- tableau_dimensions(
+  filtrar_provincia = NULL,
+  filtrar_pais = NULL,
+  seleccionar_columnes = NULL,
+  retornar_originals = FALSE)
+
+df_vazquez <- taules_dimensions(
+  filtrar_edifici = 'amphitheater',
+  filtrar_pais = NULL,
+  filtrar_provincia = NULL,
+  seleccionar_columnes = NULL,
+  retornar_originals = FALSE)
+
+# 3. Generem les llistes de taules de resum
+tab_golv_province <- amphi_func.tab_summary(
+  df = df_golvin,
+  grup_by = 'provincia_romana',
+  stats_adicionals = FALSE,
+  seleccio_variables = starts_with(c('amplada', 'alcada')),
+  na.rm = TRUE)
+
+tab_vazq_province <- amphi_func.tab_summary(
+  df = df_vazquez,
+  grup_by = 'provincia_romana',
+  stats_adicionals = FALSE,
+  seleccio_variables = starts_with(c('amplada', 'alcada')),
+  na.rm = TRUE)
+```
+
+## Resultats de Golvin (1988)
+
+A continuació es mostren les estadístiques descriptives de les dimensions dels amfiteatres segons les dades de Golvin, agrupades per província romana. Cada pestanya correspon a una variable diferent.
+
+```{r golvin-tables, results = 'asis'}
+# Generem les taules dinàmiques amb pestanyes per a les dades de Golvin
+suppressWarnings(
+datatable(tibble::as_tibble(tab_vazq_province[[1]]),
+  options = list(paging = TRUE,    ## paginate the output
+                 pageLength = 15,  ## number of rows to output for each page
+                 scrollX = TRUE,   ## enable scrolling on X axis
+                 scrollY = TRUE,   ## enable scrolling on Y axis
+                 autoWidth = TRUE, ## use smart column width handling
+                 server = FALSE,   ## use client-side processing
+                 dom = 'Bfrtip',
+                 buttons = c('csv', 'excel')),
+  extensions = 'Buttons',
+  selection = 'single', ## enable selection of a single row
+  filter = 'bottom',              ## include column filters at the bottom
+  rownames = TRUE                ## don't show row numbers/names
+)) %>%
+  formatRound(
+    columns = sapply(tab_golv_province[[1]][, -c(1:3)], as.double), digits = 2)
+ 
+
+```
+
+## Resultats de Vázquez (2023)
+
+A continuació es mostren les estadístiques descriptives de les dimensions dels amfiteatres segons les dades de Vázquez, agrupades per província romana.
+
+```{r vazquez-tables, results = 'asis'}
+
+```
