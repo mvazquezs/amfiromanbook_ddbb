@@ -48,7 +48,8 @@ amphi_tool.required_packages <- function(
   l_paquets <- c(
     'dplyr', 'tibble', 'readxl', 'data.table', 'stringr',
     'rlang', 'purrr', 'tidyr', 'missForest', 'psych',
-    'DT', 'gtsummary', 'gt')
+    'DT', 'gtsummary', 'gt', 'htmltools', 'webshot', 'webshot2',
+    'crayon')
 
 
 ### Carrega o instal·la paquets
@@ -69,4 +70,41 @@ amphi_tool.required_packages <- function(
 
 ### Evitar carrega de espai de treball
 ### rm(list = ls(all = TRUE))
+}
+
+
+### amphi_theme.gtsummary_setup
+
+#' @title Configura els temes globals per a 'gtsummary'
+#' @description Aquesta funció estableix una sèrie de temes per a la llibreria 'gtsummary'
+#'              per estandarditzar l'aparença de les taules de resum.
+#'
+#' @details
+#' La funció configura el següent:
+#' \itemize{
+#'   \item{`theme_gtsummary_printer()`: Utilitza 'gt' com a motor de renderització.}
+#'   \item{`theme_gtsummary_language()`: Estableix l'idioma a anglès i el format numèric.}
+#'   \item{`theme_gtsummary_continuous2()`: Defineix les estadístiques per defecte per a resums de tipus 'continuous2'.}
+#' }
+#'
+#' @return No retorna cap valor, modifica la configuració global de 'gtsummary'.
+#'
+#' @importFrom gtsummary theme_gtsummary_printer theme_gtsummary_language theme_gtsummary_continuous2
+#'
+#' @rdname amphi_theme.gtsummary_setup
+#' @export
+amphi_theme.gtsummary_setup <- function() {
+  gtsummary::theme_gtsummary_printer(
+    print_engine = c('gt'),
+    set_theme = TRUE)
+
+  gtsummary::theme_gtsummary_language(
+    language = c('en'),
+    decimal.mark = '.',
+    big.mark = '',
+    set_theme = TRUE)
+
+  gtsummary::theme_gtsummary_continuous2(
+    statistic = c('{mean} ({sd})', '{median}', '{IQR} ({p25}, {p75})', '{min} - {max}'),
+    set_theme = TRUE)
 }

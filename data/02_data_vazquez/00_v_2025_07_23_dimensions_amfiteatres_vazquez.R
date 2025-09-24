@@ -16,7 +16,6 @@
 #' @param filtrar_edifici Lògic. Accepta les següents opcions: amphitheater, arena_hippodrome, arena_stadium, gallo_roman, oval_structure i practice_arena.
 #' @param filtrar_provincia Lògic. Accepta noms de provincies altimperials.
 #' @param filtrar_pais Lògic. Accepta noms de païssos moderns en anglès.
-#' @param retornar_original. Lògic (per defecte FALSE). Si és TRUE retorna el llistat de dades.
 #' @param seleccionar_columnes Selecciona les columnes desitjades per la sortida del dataframe.
 #'
 #' @return Un dataframe de R (o una llista de dataframes) amb les dades fusionades i estructurades dels amfiteatres romans i republicans.
@@ -78,7 +77,10 @@ taules_dimensions <- function(
   source('R/00_v_2025_07_23_setup_dir.R')
   source('R/01_v_2025_07_23_setup_load.R')
 
+  # Captura d'expressions amb rlang
   seleccionar_columnes <- rlang::enquo(seleccionar_columnes)
+  filtrar_provincia_quo <- rlang::enquo(filtrar_provincia)
+  filtrar_pais_quo <- rlang::enquo(filtrar_pais)
 
 ### Carrega de paquets
   amphi_tool.required_packages(
@@ -119,61 +121,63 @@ taules_dimensions <- function(
 
   columnes <- setNames(columnes_vazquez, columnes_golvin)
 
-### Homogeneitzar les dades
-  for(i in seq_along(l_data_vazquez)) {
-   
-    l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>%
+### Homogeneïtzar i processar les dades amb purrr::map
+  l_data_vazquez <- purrr::map(seq_along(l_data_vazquez), function(i) {
+    df <- l_data_vazquez[[i]]
+    nom_provincia <- names(l_data_vazquez)[[i]]
+
+    df <- df %>%
       dplyr::rename(!!!columnes, pais = mod_country) %>%
       dplyr::mutate(
-        provincia_romana = paste0(names(l_data_vazquez)[[i]]),
+        provincia_romana = nom_provincia,
         ratio_arena = amplada_arena / alcada_arena,
         ratio_general = amplada_general / alcada_general,
-        superficie_arena = amplada_arena / 2 * alcada_arena / 2 * pi,
-        superficie_general = amplada_general / 2 * alcada_general / 2 * pi,
+        superficie_arena = (amplada_arena / 2) * (alcada_arena / 2) * pi,
+        superficie_general = (amplada_general / 2) * (alcada_general / 2) * pi,
         superficie_cavea = superficie_general - superficie_arena,
         perimetre_arena = pi * (amplada_arena / 2 + alcada_arena / 2),
         perimetre_general = pi * (amplada_general / 2 + alcada_general / 2),
-        ratio_cavea = superficie_arena / superficie_general)
+        ratio_cavea = superficie_arena / superficie_general
+      )
 
-    ### Argument 'filtrar_edifici'
-      if(!is.null(filtrar_edifici)) {
+    # Argument 'filtrar_edifici'
+    if (!is.null(filtrar_edifici)) {
+      df <- df %>%
+        dplyr::filter(t_building %in% filtrar_edifici) %>%
+        droplevels()
+    }
 
-        l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>%
-        dplyr::filter_at(
-          vars('t_building'), all_vars(. %in% filtrar_edifici)) %>%
-          droplevels()
-  
+    # Argument 'filtrar_provincia'
+    if (!rlang::quo_is_null(filtrar_provincia_quo) && rlang::quo_is_null(filtrar_pais_quo)) {
+      filter_expr <- filtrar_provincia_quo
+      if (is.character(rlang::quo_get_expr(filter_expr))) {
+        pattern <- paste(filtrar_provincia, collapse = "|")
+        filter_expr <- rlang::quo(stringr::str_detect(provincia_romana, !!pattern))
       }
+      df <- df %>% dplyr::filter(!!filter_expr) %>% droplevels()
+    }
 
-    ### Argument 'filtrar_provincia'
-      if(!is.null(filtrar_provincia) & is.null(filtrar_pais)) {
-
-        l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>%
-        dplyr::filter(
-          stringr::str_detect(provincia_romana, paste(filtrar_provincia, collapse = '|'))) %>%
-          droplevels()
-  
+    # Argument 'filtrar_pais'
+    if (!rlang::quo_is_null(filtrar_pais_quo) && rlang::quo_is_null(filtrar_provincia_quo)) {
+      filter_expr <- filtrar_pais_quo
+      if (is.character(rlang::quo_get_expr(filter_expr))) {
+        pattern <- paste(filtrar_pais, collapse = "|")
+        filter_expr <- rlang::quo(stringr::str_detect(pais, !!pattern))
       }
+      df <- df %>% dplyr::filter(!!filter_expr) %>% droplevels()
+    }
 
-    ### Argument 'filtrar_pais'
-      if(!is.null(filtrar_pais) & is.null(filtrar_provincia)) {
+    # Argument 'seleccionar_columnes'
+    if (!rlang::quo_is_null(seleccionar_columnes)) {
+      df <- df %>%
+        dplyr::select(index_id, nom, t_building, provincia_romana, pais, !!seleccionar_columnes)
+    }
 
-        l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>%
-        dplyr::filter(
-          stringr::str_detect(pais, paste(filtrar_pais, collapse = '|'))) %>%
-          droplevels()
-  
-      }
-    
+    return(df)
+  })
 
-    ### Argument 'seleccionar_columnes'
-      if(!rlang::quo_is_null(seleccionar_columnes)) {
-
-        l_data_vazquez[[i]] <- l_data_vazquez[[i]] %>% 
-          dplyr::select('index_id', 'nom', 't_building', 'provincia_romana', 'pais', !!seleccionar_columnes)
-
-      }
-  }    
+  # Restaurar els noms de la llista
+  names(l_data_vazquez) <- stringr::str_sub(l_fitxers, start = 37, end = -5)
 
 ### 'bind_rows' de la llista
   df_data_vazquez <- data.table::rbindlist(l_data_vazquez) %>%
@@ -183,7 +187,7 @@ taules_dimensions <- function(
 
   if (retornar_originals) {
 
-    return(l_data_vazquez)
+    return(list(df_fusionat = df_data_vazquez, l_originals = l_data_vazquez))
 
   } else {
 
