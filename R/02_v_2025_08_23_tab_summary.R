@@ -89,8 +89,7 @@ amphi_func.tab_summary <- function(
   
   ### Definició de les estadístiques bàsiques
   ### suppressWarnings() evita avisos tipus 'Inf'
-  suppressWarnings(
-    tab_bases <- lapply(
+  tab_bases <- suppressWarnings(lapply(
       sel_vars_names, function(x) {
         df[, x] <- df[, x]
         
@@ -115,10 +114,9 @@ amphi_func.tab_summary <- function(
   names(tab_bases) <- sel_vars_names
   
   ### 'stats_adicionals' argument
-  if(isTRUE(stats_adicionals)){
+  if (isTRUE(stats_adicionals)) {
     
-    suppressWarnings(
-      tab_adicionals <- lapply(
+    tab_adicionals <- suppressWarnings(lapply(
         sel_vars_names, function(x) {
           df[, x] <- df[, x]
           
@@ -133,70 +131,55 @@ amphi_func.tab_summary <- function(
                            kurt = ~ e1071::kurtosis(., na.rm = na.rm),
                            skew = ~ e1071::skewness(., na.rm = na.rm))) %>%
             as_tibble() %>%
-            distinct()
+            distinct() 
         }))
     
     ### Unir 'tab_bases' i 'tab_adicionals'
-    l_tab_all <- list()
+    if (!is.null(grup_by)) {
+      
+      l_tab_all <- mapply(
+        dplyr::left_join,
+        tab_bases,
+        tab_adicionals,
+        MoreArgs = list(by = group_cols_names),
+        SIMPLIFY = FALSE)
     
-    for(i in seq_along(tab_bases)) { 
-      
-      if(!is.null(grup_by)) {
-        
-        tab_all <- dplyr::left_join(
-          tab_bases[[i]], 
-          tab_adicionals[[i]], 
-          by = group_cols_names)
-        
-      } else {
-        
-        tab_all <- dplyr::cross_join(
-          tab_bases[[i]], 
-          tab_adicionals[[i]])
-        
-      }
-      
-      l_tab_all[[length(l_tab_all) + 1]] = tab_all
-      
-    }
-    
-    names(l_tab_all) <- sel_vars_names
-    
-    # Arrodoniment
-    l_tab_all <- lapply(l_tab_all, function(df) {
-      df %>% dplyr::mutate(dplyr::across(where(is.double), ~round(., digits)))
-    })
-    
-    if (isTRUE(bind_rows)) {
-      
-      df_tab_all <- dplyr::bind_rows(l_tab_all, .id = 'variable') %>%
-        dplyr::mutate(variable = as.factor(variable))
-
-      return(df_tab_all)
-      
     } else {
       
-      return(l_tab_all)
+      l_tab_all <- mapply(
+        dplyr::cross_join,
+        tab_bases,
+        tab_adicionals,
+        SIMPLIFY = FALSE)
+    
     }
+  
+  } else {
+
+    l_tab_all <- tab_bases
+  
+  }
+  
+  ### Retornar resultats
+  if (isTRUE(bind_rows)) {
+    
+    df_tab_all <- dplyr::bind_rows(l_tab_all, .id = 'variable') %>%
+      dplyr::mutate(variable = as.factor(variable)) %>%
+      dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
+      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+    
+    return(df_tab_all)
     
   } else {
+
+  for(i in seq_along(l_tab_all)) {
+
+    l_tab_all[[i]] <- l_tab_all[[i]] %>%
+      dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
+      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+
+  }
     
-    # Arrodoniment
-    tab_bases <- lapply(tab_bases, function(df) {
-      df %>% dplyr::mutate(dplyr::across(where(is.double), ~round(., digits)))
-    })
-    
-    if (isTRUE(bind_rows)) {
-      
-      df_tab_bases <- dplyr::bind_rows(tab_bases, .id = 'variable') %>%
-        dplyr::mutate(variable = as.factor(variable))
-      
-      return(df_tab_bases)
-      
-    } else {
-      
-      return(tab_bases)
-      
-    }
+    return(l_tab_all)
   }
 }

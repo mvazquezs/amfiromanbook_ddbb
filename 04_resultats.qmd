@@ -9,7 +9,7 @@ source('R/00_v_2025_07_23_setup_dir.R')
 source('data/01_data_golvin/00_v_2025_07_17_dimensions_amfiteatres_golvin.R')
 source('data/02_data_vazquez/00_v_2025_07_23_dimensions_amfiteatres_vazquez.R')
 source('R/02_v_2025_08_23_tab_summary.R')
-source('R/02_v_2025_09_23_tab_gtsummary.R')
+
 
 amphi_tool.required_packages(
   locale = 'es_ES.UTF-8',
@@ -17,7 +17,7 @@ amphi_tool.required_packages(
 
 # 2. Creem les matrius de dades
 df_golvin <- tableau_dimensions(
-  filtrar_provincia = NULL,
+  filtrar_provincia = c('hispania', 'panonnia', 'britannia'),
   filtrar_pais = NULL,
   seleccionar_columnes = NULL,
   retornar_originals = FALSE)
@@ -25,44 +25,44 @@ df_golvin <- tableau_dimensions(
 df_vazquez <- taules_dimensions(
   filtrar_edifici = 'amphitheater',
   filtrar_pais = NULL,
-  filtrar_provincia = contains(c('hispania', 'panonnia', 'britannia')),
+  filtrar_provincia = c('hispania', 'panonnia', 'britannia'),
   seleccionar_columnes = NULL,
   retornar_originals = FALSE)
 
 # 3. Generem les llistes de taules de resum
 tab_01 <- amphi_func.tab_summary(
+  df = df_golvin,
+  grup_by = 'nom',
+  stats_adicionals = FALSE,
+  seleccio_variables = starts_with(c('amplada', 'alcada')),
+  na.rm = TRUE,
+  bind_rows = FALSE,
+  digits = 1)
+
+tab_02 <- amphi_func.tab_summary(
   df = df_vazquez,
   grup_by = 'nom',
   stats_adicionals = FALSE,
   seleccio_variables = starts_with(c('amplada', 'alcada')),
   na.rm = TRUE,
-  bind_rows = TRUE,
+  bind_rows = FALSE,
   digits = 1)
 
-tabgt_01 <- amphi_func.tab_gtsummary(
-  df = df_vazquez,
-  seleccio_variables = c(amplada_general, alcada_general),
-  grup_by = provincia_romana,
-  type_list = NULL,
-  label_list = list(
-    amplada_general ~ 'Amplada General (m)',
-    alcada_general ~ 'Alçada General (m)'),
-  table_title = 'Dimensions dels amfiteatres')
-
 ```
+
 
 ## Resultats de Golvin (1988)
 
 A continuació es mostren les estadístiques descriptives de les dimensions dels amfiteatres segons les dades de Golvin, agrupades per província romana. Cada pestanya correspon a una variable diferent.
 
-```{r golvin-tables, results = 'asis'}
+```{r golvin-tables, panel = 'tabset'}
 
 ```
 
+
 ## Resultats de Vázquez (2023)
 
-A continuació es mostren les estadístiques descriptives de les dimensions dels amfiteatres segons les dades de Vázquez, agrupades per província romana.
+```{r vazquez-tables, panel="tabset"}
 
-```{r vazquez-tables, results = 'asis'}
 
 ```
