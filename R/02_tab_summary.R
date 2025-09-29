@@ -1,4 +1,4 @@
-### the 'amphi_func.tab_summary'
+### the 'tab_summary'
 
 #' @title Calcula estadístiques descriptives per a un `data.frame`.
 #' @description Calcula un conjunt complet d'estadístiques descriptives per a variables numèriques, incloent quantils, mitjana, mediana, asimetria, curtosi i el test de Shapiro-Wilk. La funció està optimitzada per al seu ús amb el `tidyverse`.
@@ -37,7 +37,7 @@
 #'   valor_extra = c(10, 20, 30, 40, 50, 60))
 #'
 #' # Calcula estadístiques descriptives bàsiques per grup amb arrodoniment
-#' amphi_func.tab_summary(
+#' tab_summary(
 #'   df = df_test, 
 #'   seleccio_variables = starts_with('valor'),
 #'   grup_by = 'grup_a',
@@ -49,9 +49,9 @@
 #'   bind_rows = TRUE,
 #'   digits = 2)
 #'
-#' @rdname amphi_func.tab_summary
+#' @rdname tab_summary
 #' @export
-amphi_func.tab_summary <- function(
+tab_summary <- function(
     df,
     grup_by = NULL,
     seleccio_variables,

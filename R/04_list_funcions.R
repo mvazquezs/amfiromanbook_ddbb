@@ -1,22 +1,18 @@
+#' @title Funcions d'Anàlisi del Projecte
+#' @description Aquest fitxer conté totes les funcions d'anàlisi utilitzades en el projecte.
 
-#' @include m067cyto_ddbb.10_03_stat_summary.R
-NULL
-#' Performs basic conventional crosstabs descriptives tables.
-#' @inheritParams broom::tidy
-#' @description Perform basic descriptives parameters as evaluate frequencies, rows and columns
-#' percentatges. Also it performs 'sum()' of the last features.
-#' @param phen data frame to evaluate diferent variables.
-#' @param vars_x variables to evaluate frequencies and rows and columns percentatges. Also, it add
-#' margins to the crosstab features.
-#' @param vars_y variables to nest and obtain the crosstab features of the dataset.
-#' @param multi_tab logical. FALSE (by default) to avoid nest group in the crosstab.
-#' @param sum_out logical. TRUE (by default) to avoid showning the 'sum()' fetaures.
-#' @seealso \code{\link[broom]{tidy}} to catch the tables as 'data.frame()'.
-#' @return a list of dataset by variables tested.
+# --- Funcions de Taules de Resum ---
 
-#' @rdname m067cyto_ddbb.stat_summary.crostab
+#' @title Crea una taula de resum creuat
+#' @description Realitza taules de contingència descriptives bàsiques.
+#' @param phen Dataframe a avaluar.
+#' @param vars_x Variables per a les files.
+#' @param vars_y Variables per a les columnes.
+#' @param multi_tab Lògic. Si és FALSE, no anida grups.
+#' @param sum_out Lògic. Si és TRUE, amaga els totals.
+#' @return Una llista de dataframes amb les taules de contingència.
 #' @export
-m067cyto_ddbb.stat_summary.crosstab <- function(
+amphi_crosstab <- function(
   phen,
   vars_x,
   vars_y,
@@ -24,28 +20,16 @@ m067cyto_ddbb.stat_summary.crosstab <- function(
   sum_out = TRUE,
   stat = c('broom'))
 {
-### the 'match.arg()'
 	stat <- match.arg(stat, c('broom'))
-
-## Warning messages:
-## 2: 'tidy.table' is deprecated
-## Warning messages:
-## 2: 'tidy.table' is deprecated
-## Warning messages:
-## 2: 'tidy.table' is deprecated
   options(warn = -1)
 
-### list of formulas
   l_formulas <- list()
   l_vars <- c(vars_x, vars_y)
 
-
-### loop for 'vars_x' & 'vars_y'
   if(multi_tab == FALSE) {
     for(j in vars_x) {
       for(i in vars_y) {
         forms <- paste0(' ~ ', j, ' + ', i)
-
        l_formulas[[length(l_formulas) + 1]] = forms
       }
     }
@@ -58,82 +42,198 @@ m067cyto_ddbb.stat_summary.crosstab <- function(
     }
   }
 
-### create a list
   l_tab <- list()
 
-### loop
   for(i in seq_along(l_formulas)) {
-    # create list of elements
       tab_1 <- as_tibble(
         broom::tidy(addmargins(xtabs(
          formula = l_formulas[[i]], data = phen, addNA = TRUE, drop.unused.levels = TRUE)))) %>%
-        select(everything(), freq = n)# frequencies info
+        select(everything(), freq = n)
 
      tab_2 <- as_tibble(
        broom::tidy(prop.table(addmargins(xtabs(
         formula = l_formulas[[i]], data = phen, addNA = TRUE, drop.unused.levels = TRUE)), margin = 1))) %>%
-       select(row_perc = n) # row percentatges
+       select(row_perc = n)
 
      tab_3 <- as_tibble(
        broom::tidy(prop.table(addmargins(xtabs(
         formula = l_formulas[[i]], data = phen, addNA = TRUE, drop.unused.levels = TRUE)), margin = 2))) %>%
-       select(col_perc = n) # col percentatges
+       select(col_perc = n)
 
     tab <- bind_cols(tab_1, tab_2, tab_3)
 
-    # save a list
       l_tab[[length(l_tab) + 1]] = tab
   }
 
-
-### names()
   names(l_tab) <- vars_x
 
-
-### argument 'sum'
   if(sum_out == TRUE) {
     for(i in seq_along(vars_x)){
-      # filter 'l_dat'
       l_tab[[i]] <- l_tab[[i]] %>%
         filter_at(vars(vars_x[[i]], vars_y), all_vars(. != 'Sum'))
       }
   }
 
-
-### return
   return(l_tab)
 }
 
-
-### Adding categorised 'pval_labels' to the 'raw_pval' and the 'adj_pval'
-
-#' Adjust 'p_values' for multiple comparisons test.
-#' @description A 'pipe_friendly' code to add an adjusted 'p_values' columns into datasets.
-#' @inheritParams stats::p.adjust
-#' @param phen dataset containing a 'raw_pval' column.
-#' @param method method for adjusting 'raw_pval'.
-#' Include 'holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY',  'fdr', 'none'.
-#' For non_adjusting method (not recommended), use method = 'none'.
-#' @param trend logical FALSE (by default). The TRUE option uses 'trend' approach.
-#' @seealso \code{\link[stats]{p.adjust}} for the multiple comparisons test.
-#' @return a dataset with several recodification of the raw and adjust 'p_values'.
-#'
-#' @rdname amphi_func.p_adjust
+#' @title Calcula estadístiques descriptives per a un `data.frame`.
+#' @description Calcula un conjunt complet d'estadístiques descriptives per a variables numèriques.
+#' @param df El `data.frame` o `tibble` d'entrada.
+#' @param seleccio_variables Les variables numèriques a analitzar.
+#' @param grup_by Les variables per agrupar les dades.
+#' @param stats_adicionals Vector de caràcters per especificar estadístiques addicionals.
+#' @param q_lower Quantil inferior.
+#' @param q_upper Quantil superior.
+#' @param sd_num Nombre de desviacions estàndard.
+#' @param na.rm Lògic. Si és `TRUE`, elimina els NA.
+#' @param bind_rows Lògic. Si és `TRUE`, combina els resultats en un sol tibble.
+#' @param digits Nombre de dígits decimals.
+#' @return Un `tibble` amb les estadístiques descriptives.
 #' @export
-amphi_func.p_adjust <- function(
+amphi_summary_table <- function(
+    df,
+    grup_by = NULL,
+    seleccio_variables,
+    stats_adicionals = FALSE,
+    sd_num = NULL,
+    q_lower = NULL,
+    q_upper = NULL,
+    na.rm = TRUE,
+    bind_rows = TRUE,
+    digits = 2)
+{
+  sel_exp_variables <- rlang::enquo(seleccio_variables)
+  grup_exp_by <- rlang::enquo(grup_by)
+  
+  sel_vars_names <- names(
+    dplyr::select(df, !!sel_exp_variables))
+  
+  group_cols_names <- if (!is.null(grup_by)) {
+    
+    names(
+      dplyr::select(df, !!grup_exp_by))
+    
+  } else {
+    
+    character(0)
+  }
+  
+  if (!is.null(grup_by)) {
+    df <- df %>%
+      dplyr::mutate(dplyr::across(dplyr::all_of(group_cols_names), as.factor))
+  }
+  
+  tab_bases <- suppressWarnings(lapply(
+      sel_vars_names, function(x) {
+        df[, x] <- df[, x]
+        
+        df %>%
+          group_by_at(group_cols_names) %>%
+          summarise_at(vars(all_of(x)),
+                       list(
+                         n = ~ sum(!is.na(.)),
+                         na = ~ sum(is.na(.)),
+                         min = ~ min(., na.rm = na.rm),
+                         q_1 = ~ quantile(., probs = 0.25, na.rm = na.rm),
+                         median = ~ median(., na.rm = na.rm),
+                         mean = ~ mean(., na.rm = na.rm),
+                         sd = ~ sd(., na.rm = na.rm),
+                         q_3 = ~ quantile(., probs = 0.75, na.rm = na.rm),
+                         max = ~ max(., na.rm = na.rm),
+                         iqr = ~ stats::IQR(., na.rm = na.rm))) %>%
+          as_tibble() %>%
+          distinct()
+      }))
+  
+  names(tab_bases) <- sel_vars_names
+  
+  if (isTRUE(stats_adicionals)) {
+    
+    tab_adicionals <- suppressWarnings(lapply(
+        sel_vars_names, function(x) {
+          df[, x] <- df[, x]
+          
+          df %>%
+            group_by_at(group_cols_names) %>%
+            summarise_at(vars(all_of(x)),
+                         list(
+                           q_lower = ~ quantile(., probs = q_lower, na.rm = na.rm),
+                           sd_lower = ~ as.double(mean(., na.rm = na.rm) - sd_num * sd(., na.rm = na.rm)), 
+                           sd_upper = ~ as.double(mean(., na.rm = na.rm) + sd_num * sd(., na.rm = na.rm)),
+                           q_upper = ~ quantile(., probs = q_upper, na.rm = na.rm),
+                           kurt = ~ e1071::kurtosis(., na.rm = na.rm),
+                           skew = ~ e1071::skewness(., na.rm = na.rm))) %>%
+            as_tibble() %>%
+            distinct() 
+        }))
+    
+    if (!is.null(grup_by)) {
+      
+      l_tab_all <- mapply(
+        dplyr::left_join,
+        tab_bases,
+        tab_adicionals,
+        MoreArgs = list(by = group_cols_names),
+        SIMPLIFY = FALSE)
+    
+    } else {
+      
+      l_tab_all <- mapply(
+        dplyr::cross_join,
+        tab_bases,
+        tab_adicionals,
+        SIMPLIFY = FALSE)
+    
+    }
+  
+  } else {
+
+    l_tab_all <- tab_bases
+  
+  }
+  
+  if (isTRUE(bind_rows)) {
+    
+    df_tab_all <- dplyr::bind_rows(l_tab_all, .id = 'variable') %>%
+      dplyr::mutate(variable = as.factor(variable)) %>%
+      dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
+      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+    
+    return(df_tab_all)
+    
+  } else {
+
+  for(i in seq_along(l_tab_all)) {
+
+    l_tab_all[[i]] <- l_tab_all[[i]] %>%
+      dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
+      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+
+  }
+    
+    return(l_tab_all)
+  }
+}
+
+
+# --- Funcions Estadístiques ---
+
+#' @title Ajusta els p-values per a comparacions múltiples.
+#' @description Afegeix columnes de p-values ajustats a un dataframe.
+#' @param phen Dataframe amb una columna 'raw_pval'.
+#' @param method Mètode d'ajust.
+#' @param trend Lògic. Si és TRUE, utilitza l'aproximació de tendència.
+#' @return Un dataframe amb els p-values ajustats.
+#' @export
+amphi_adjust_pvalue <- function(
   phen,
   method = c('holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY',  'fdr', 'none'),
   trend = FALSE,
   stat = c('Hmisc'))
 {
-## nc == no converge
-## np == no perform test
-## ns == no signifincant
-
-### argument 'stat'
   stat <- match.arg(stat, c('Hmisc'))
 
-### update dataset with 'raw_pval' and 'adjust_pval'
   if('raw_pval' %in% names(phen)) {
     phen <- phen %>%
       mutate(
@@ -166,7 +266,6 @@ amphi_func.p_adjust <- function(
           ifelse(adj_pval <= 0.01, '*',
           ifelse(adj_pval <= 0.05, '.', 'ns'))))))))
 
-        ### argument 'trend'
           if (trend == TRUE) {
             phen <- phen %>%
              mutate(
@@ -217,55 +316,15 @@ amphi_func.p_adjust <- function(
           ifelse(adj_pval <= 0.05, '.', 'ns'))))))))
     }
 
-
-### return
   return(phen)
 }
 
-### the 'm067cyto_ddbb.stat.statistical_bitest()'---------------------------------------------------
-
-#' @include m067cyto_ddbb.10_03_stat_summary.R
-NULL
-#' Performs 'Wilcoxon' and 'T-test' tests.
-#' @inheritParams rstatix::wilcox_test
-#' @inheritParams rstatix::t_test
-#' @inheritParams janitor::clean_names
-#' @description Provides a pipe_friendly dataset with info of the 'Wilcoxon' and 'T-test' tests (see 'stats').
-#' @param df dataset to evaluate diferent variables.
-#' @param gr_nest group of variables where the tests will be performed.
-#' @param vars_x variables 'x' to create the formula.
-#' @param vars_y variables 'y' to create the formula.
-#' @param stat_tests only two test have been implemented: 'Wilcoxon' and 'T-test' tests.
-#' @param trend logical. TRUE (by default) uses 'trend' approach.
-#' @param adjust_method method for adjusting 'raw_pval'.
-#' Include 'holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY',  'fdr', 'none'.
-#' For non_adjusting method (not recommended), use method = 'none'.
-#' @param adjust_gr group of variables to nest for applying the 'multiple comparison test'.
-#' @param gr01_gr02_select select only the group combinations to show and plot.
-#' @param gmean_update logical. TRUE (by default) performs calculation of the geometric mean and
-#' confidence interval.
-#' @param median_update logical. TRUE (by default) evaluates quantiles (include IQR) and median.
-#' @param coord_update logical. TRUE (by default) performs coordenates to plot correctly the 'p_values'.
-#' @param k_cutoff restriction of the outlier removing range. Generally 3, based of the IQR method.
-#' By default NULL.
-#' @param upseg_dbl performs the increase of the segments of the 'p_values'. Recomendation '0.02'.
-#' By default NULL.
-#' @param upseg_dbl performs the increase of the text of the 'p_values'. Recomendation '0.1'.
-#' By default NULL.
-#' @param down_dbl performs the decrease of the segments of the 'counters'. Recomendation '0.05'.
-#' By default NULL.
-#' @param step_dbl. performs the distance between the segments of the 'p_values'.
-#' Recomendation '20' in standard boxplots. Recomendation '0.6' in 'var_x' multilevel boxplots.
-#' By default NULL.
-#' @seealso \code{\link[rstatix]{wilcox.test}} for the kurtosis calculation.
-#' @seealso \code{\link[rstatix]{t.test}} for the skewness calculation.
-#' @seealso \code{\link[stats]{p.adjust}} for the multiple comparisons test.
-#' @seealso \code{\link[janitor]{clean_names}} to recode the variable names of the datasets.
-#' @return a dataset with the test performed for all the list of variables.
-
-#' @rdname m067cyto_ddbb.stat.statistical_bitest
+#' @title Realitza tests estadístics bivariats.
+#' @description Realitza tests de Wilcoxon i T-test.
+#' @param ... Paràmetres de la funció original.
+#' @return Un dataframe amb els resultats dels tests.
 #' @export
-m067cyto_ddbb.stat.statistical_bitest <- function(
+amphi_stat_test <- function(
   df,
   gr_nest = c('analyte_lb', 't_stimul'),
   vars_x = c('vaccine_t', 'vaccine_point_lb', 'cc21_point_vaccine_lb'),
@@ -273,7 +332,7 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
   stat_tests = c('t_test', 'wilcox_test'),
   trend = TRUE,
   adjust_method = c('holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY',  'fdr', 'none'),
-  adjust_gr = c('t_stimul', 'vars_y'), ## 't_stimul' include multiple test adjust
+  adjust_gr = c('t_stimul', 'vars_y'),
   coord_update = TRUE,
   upseg_dbl = .02,
   up_dbl = .1,
@@ -285,43 +344,23 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
   median_update = FALSE,
   stat = c('janitor', 'stats', 'rstatix'))
 {
-### m067cyto_ddbb.stat.p_adjust() by default choose 'trend = TRUE'
-
-### argument for the packages loaded
   stat <- match.arg(stat, c('janitor', 'stats', 'rstatix'))
 
-
-### list of 'l_formula' to perform
-### list of 'l_gr_nest' to perform
-### list of 'l_gr_adjust' to perform
   l_formula <- list()
   l_gr_nest <- list(gr_nest)
   l_gr_adjust <- list(adjust_gr)
 
-
-### loop#01 'l_formula'
   for(i in seq_along(vars_y)) {
     for(j in seq_along(vars_x)) {
-
-    ### build 'formula'
       l_form <- paste(vars_y[i], '~', vars_x[j], collapse = '')
-
-
-    ### save
       l_formula[[length(l_formula) + 1]] = l_form
     }
   }
 
-
-### list of data to perform
   l_df <- list()
 
-
-### loop ##02 calculate 'nest()' dimension
-### calculation of statistical test proposed
   for(i in seq_along(l_formula)) {
 
-    ### 'group_nest()' and 'slice()' the 'data'
       df_1 <- df %>%
         group_by_at(l_gr_nest[[i]]) %>%
         nest() %>%
@@ -329,8 +368,6 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
         mutate(formula = unlist(rep_len(l_formula[[i]], length.out = length(l_formula[[i]])))) %>%
         separate(formula, c('vars_y', 'vars_x'), sep = ' ~ ', remove = FALSE)
 
-
-    ### argument 'stat_tests' for calculate the 'p_values'
       if(stat_tests == 't_test') {
 
           df_1 <- df_1 %>%
@@ -359,8 +396,6 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
 
        }
 
-
-       ### select columns to include into 'df_1'
          df_1 <- df_1 %>%
            select(-data) %>%
            unnest(cols = c('data_test')) %>%
@@ -373,9 +408,6 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
            mutate(
              gr01_gr02 = factor(as.character(paste0(group1, ' ~ ', group2))))
 
-
-        ### update with raw_pval()' and 'pval_adjust()' data
-        ### argument 'adjust_gr'
           if(!missing(adjust_gr) & !missing(adjust_method)) {
 
             df_1 <- df_1 %>%
@@ -384,7 +416,7 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
               nest() %>%
               mutate(
                 adjust_data = map(data,
-                ~ m067cyto_ddbb.stat.p_adjust(
+                ~ amphi_adjust_pvalue(
                     phen = .x,
                     method = adjust_method,
                     trend = trend))) %>%
@@ -400,7 +432,7 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
           } else {
 
             df_1 <- df_1 %>%
-               m067cyto_ddbb.stat.p_adjust(
+               amphi_adjust_pvalue(
                  method = adjust_method,
                  trend = trend) %>%
               ungroup() %>%
@@ -409,20 +441,13 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
 
           }
 
-
-    ### save
       l_df[[length(l_df) + 1]] = df_1
   }
 
-
-### update 'list' of 'l_df'
   l_df <- unlist(l_df, recursive = FALSE)
 
-
-### argument 'gr01_gr02_index' out
   if(!is.null(gr01_gr02_select)) {
 
-    ### loop#06
       for(i in seq_along(l_df)) {
 
         l_df[[i]] <- l_df[[i]] %>%
@@ -435,7 +460,6 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
 
     } else {
 
-    ### loop#06
       for(i in seq_along(l_df)) {
 
         l_df[[i]] <- l_df[[i]] %>%
@@ -445,18 +469,12 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
     }
   }
 
-### update argument 'gmean_update'
   if(gmean_update == TRUE & !missing(down_dbl)) {
 
-    ### 'list()'
       l_gmean <- list()
 
-
-      ### custom functions
         count_n <- function(x) sum(!is.na(x))
 
-
-      ### loop ##03 calculates geometric mean through 'm067cyto_ddbb.stat.geomean_ci()'
         for(i in seq_along(vars_y)) {
 
         l_gm <- df %>%
@@ -465,7 +483,7 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
           nest() %>%
           mutate(
             gm_data = map(data,
-            ~ m067cyto_ddbb.stat.geomean_ci(
+            ~ amphi_geomean_ci(
                 x = .x[, vars_y[i]],
                 alpha = .05,
                 gaussian_distribution = FALSE,
@@ -480,28 +498,18 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
             unnest(cols = c(n, down, gm_mean, gm_lower, gm_upper)) %>%
             ungroup()
 
-
-        ### save
           l_gmean[[length(l_gmean) + 1]] = l_gm
 
         }
       }
 
-
-### update argument 'gmean_update'
   if(median_update == TRUE) {
 
-    ### 'list()'
       l_median <- list()
 
-
-    ### custom functions
       count_n <- function(x) sum(!is.na(x))
 
-
-    ### loop#04 calculates median and 'IQRs'
       for(i in seq_along(vars_y)) {
-
 
       l_med <- df %>%
         select(any_of(gr_nest), any_of(vars_y), any_of(vars_x)) %>%
@@ -517,28 +525,20 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
         unnest(cols = c(n, q1, median, q3, iqr)) %>%
         ungroup()
 
-        ### save
           l_median[[length(l_median) + 1]] = l_med
 
         }
     }
 
-
-### update for 'l_df' and 'l_coord'
   if(coord_update == TRUE) {
 
-  ### 'list()'
     l_coord <- list()
 
-
-  ### loop ##03 calculates geometric mean through 'm067cyto_ddbb.stat.geomean_ci()'
     for(i in seq_along(vars_y)) {
 
-
-    ### argument for 'outliers remove' through 'm067cyto_ddbb.stat_summary.is_outlier()'
       if(!is.null(k_cutoff)) {
 
-        df <- m067cyto_ddbb.stat_summary.is_outlier(
+        df <- amphi_is_outlier(
           df = df,
           gr_by = gr_nest,
           var_y = vars_y[i],
@@ -553,7 +553,6 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
 
       }
 
-    ### update the dataset of 'p_values'
       l_cartesian <- df %>%
         select(any_of(gr_nest), any_of(vars_y), any_of(vars_x)) %>%
         group_by_at(gr_nest) %>%
@@ -568,8 +567,6 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
         unnest(cols = c(y_max, up_seg, up, down, step_incr)) %>%
         ungroup()
 
-
-      ### loop##04 to 'join' the list of 'l_df' and 'l_coord'
         for(i in seq_along(l_df)) {
 
           l_full <- left_join(
@@ -581,43 +578,34 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
 
           }
 
-          ### save
             l_coord[[length(l_coord) + 1]] = l_full
           }
       }
 
-### update 'l_df'
   if(coord_update == TRUE) {
 
-    ### update
       l_df <- l_coord
 
   }
 
-
-### argumentary to shown correct information
   if (gmean_update == FALSE & median_update == FALSE) {
 
-    ### update 'list()'
       names(l_df) <- c(l_formula)
 
   } else if (gmean_update == TRUE & median_update == FALSE) {
 
-    ### update 'list()'
       l_df <- c(l_df, l_gmean)
 
       names(l_df) <- c(l_formula, vars_y)
 
   } else if (gmean_update == FALSE & median_update == TRUE) {
 
-    ### update 'list()'
       l_df <- c(l_df_coord, l_median)
 
       names(l_df) <- c(l_formula, vars_y)
 
   } else if (gmean_update == TRUE & median_update == TRUE) {
 
-    ### update 'list()'
       l_df <- c(l_df, l_gmean, l_median)
 
       names(l_df) <- unlist(c(
@@ -626,59 +614,16 @@ m067cyto_ddbb.stat.statistical_bitest <- function(
 
   }
 
-
-### return
   return(l_df)
 }
 
 
-
-
-### the 'm067cyto_ddbb.stat.statistical_multitest()'------------------------------------------------
-
-#' @include m067cyto_ddbb.10_03_stat_summary.R
-NULL
-#' Performs 'Wilcoxon' and 'T-test' tests.
-#' @inheritParams rstatix::welch_anova_test
-#' @inheritParams rstatix::games_howell_test
-#' @inheritParams rstatix::kruskal_test
-#' @inheritParams rstatix::dunn_test
-#' @inheritParams janitor::clean_names
-#' @description Provides a pipe_friendly dataset with info of the 'Welch ANOVA', 'Games Howell', 'Kruskal-Wallis'
-#' and 'Dunn' tests.
-#' @param df dataset to evaluate diferent variables.
-#' @param gr_nest group of variables where the tests will be performed.
-#' @param vars_x variables 'x' to create the formula.
-#' @param vars_y variables 'y' to create the formula.
-#' @param stat_tests only four test have been implemented: 'Welch ANOVA', 'Games Howell', 'Kruskal-Wallis'
-#' and 'Dunn' tests
-#' @param trend logical. TRUE (by default) uses 'trend' approach.
-#' @param adjust_method method for adjusting 'raw_pval'.
-#' Include 'holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY',  'fdr', 'none'.
-#' For non_adjusting method (not recommended), use method = 'none'.
-#' @param adjust_gr group of variables to nest for applying the 'multiple comparison test'.
-#' @param coord_update logical. TRUE (by default) performs coordenates to plot correctly the 'p_values'.
-#' @param upseg_dbl performs the increase of the segments of the 'p_values'. Recomendation '0.02'.
-#' By default NULL.
-#' @param upseg_dbl performs the increase of the text of the 'p_values'. Recomendation '0.1'.
-#' By default NULL.
-#' @param down_dbl performs the decrease of the segments of the 'counters'. Recomendation '0.05'.
-#' By default NULL.
-#' @param step_dbl. performs the distance between the segments of the 'p_values'.
-#' Recomendation '20' in standard boxplots. Recomendation '0.6' in 'var_x' multilevel boxplots.
-#' By default NULL.
-#' @param heatmap_update logical. FALSE (by default) performs a dataset with group comparisons in the same row.
-#' @seealso \code{\link[rstatix]{welch_anova_test}} for the gaussian distribution multilevel variable.
-#' @seealso \code{\link[rstatix]{games_howell_test}} for the gaussian distribution multilevel variable.
-#' @seealso \code{\link[rstatix]{kruskal_test}} for the non-gaussian distribution multilevel variable.
-#' @seealso \code{\link[rstatix]{dunn_test}} for the non-gaussian distribution multilevel variable.
-#' @seealso \code{\link[stats]{p.adjust}} for the multiple comparisons test.
-#' @seealso \code{\link[janitor]{clean_names}} to recode the variable names of the datasets.
-#' @return a dataset with the test performed for all the list of variables.
-
-#' @rdname m067cyto_ddbb.stat.statistical_multitest
-# '@export
-m067cyto_ddbb.stat.statistical_multitest <- function(
+#' @title Realitza tests estadístics multivariats.
+#' @description Realitza tests de Welch ANOVA, Games Howell, Kruskal-Wallis i Dunn.
+#' @param ... Paràmetres de la funció original.
+#' @return Un dataframe amb els resultats dels tests.
+#' @export
+amphi_stat_multitest <- function(
   df,
   gr_nest = c('analyte_lb', 't_stimul'),
   vars_x = c('vaccine_t', 'vaccine_point_lb', 'cc21_point_vaccine_lb'),
@@ -686,53 +631,33 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
   stat_tests = c('welch_oneway', 'kruskal_wallis', 'games_howell', 'dunn'),
   trend = TRUE,
   adjust_method = c('holm', 'hochberg', 'hommel', 'bonferroni', 'BH', 'BY',  'fdr', 'none'),
-  adjust_gr = c('t_stimul', 'vars_y'), ## 't_stimul' include multiple test adjust
+  adjust_gr = c('t_stimul', 'vars_y'),
   coord_update = TRUE,
-  upseg_dbl = NULL, ## .02
-  up_dbl = NULL, ## .1
-  down_dbl = NULL, ## .05
-  step_dbl = NULL, ## 20
-  vars_stats, ## 'l_vars_shapiro_00'
+  upseg_dbl = NULL,
+  up_dbl = NULL,
+  down_dbl = NULL,
+  step_dbl = NULL,
+  vars_stats,
   heatmap_update = FALSE,
   stat = c('janitor', 'stats', 'rstatix'))
 {
-### by default we want it NULL because it's only needed for Dunn & Games Howell tests
-### chmi.stat.p_adjust() by default choose 'trend = TRUE'
-### the 'heatmap_update' is only performed for one 'vars_y'
-
-### argument for the packages loaded
   stat <- match.arg(stat, c('janitor', 'stats', 'rstatix'))
 
-
-### list of 'l_formula' to perform
-### list of 'l_gr_nest' to perform
-### list of 'l_gr_adjust' to perform
   l_formula <- list()
   l_gr_nest <- list(gr_nest)
   l_gr_adjust <- list(adjust_gr)
 
-
-### loop#01 formula
     for(i in seq_along(vars_y)) {
       for(j in seq_along(vars_x)) {
-      # build 'formula'
         form_1 <- paste(vars_y[i], '~', vars_x[j], collapse = '')
-
-      # list
         l_formula[[length(l_formula) + 1]] = form_1
       }
     }
 
-
-### list of data to perform
   l_df <- list()
 
-
-### loop ##02 calculate 'nest()' dimension
-### calculation of statistical test proposed
   for(i in seq_along(l_formula)) {
 
-    ### 'group_nest()' and 'slice()' the 'data'
       df_1 <- df %>%
         group_by_at(l_gr_nest[[i]]) %>%
         nest() %>%
@@ -740,8 +665,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
         mutate(formula = unlist(rep_len(l_formula[[i]], length.out = length(l_formula[[i]])))) %>%
         separate(formula, c('vars_y', 'vars_x'), sep = ' ~ ', remove = FALSE)
 
-
-      ### argument 'stat_tests' for calculate the 'p_values'
         if(stat_tests == 'welch_oneway') {
 
           df_1 <- df_1 %>%
@@ -784,8 +707,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
 
       }
 
-
-  ### select columns to include into 'df_pval'
     df_1 <- df_1 %>%
       select(-data) %>%
       unnest(cols = c(data_test)) %>%
@@ -793,8 +714,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
       janitor::clean_names(case = 'old_janitor') %>%
       mutate_at(vars(c('formula', starts_with('vars_'), starts_with('group'))), ~ factor(.))
 
-
-  ### list of names to preserve
     base_01 <- c(names(df_1), stat_method = 'method', 'n', 'statistic')
     welch <- c(base_01, 'dfn', 'dfd', raw_pval = 'p')
     kruskal <- c(base_01, 'df', raw_pval = 'p')
@@ -806,9 +725,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
     dunn <- c(
       base_02, 'group1', 'group2', 'estimate', 'estimate1', 'estimate2', 'statistic', raw_pval = 'p')
 
-
-  ### 'select()' data
-    # update 'data'
       if(stat_tests == 'welch_oneway') {
 
         df_1 <- df_1 %>%
@@ -839,8 +755,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
 
       }
 
-  ### update with raw_pval()' and 'pval_adjust()' data
-  ### argument 'adjust_gr'
     if(!missing(adjust_gr) & !missing(adjust_method)) {
 
       df_1 <- df_1 %>%
@@ -851,7 +765,7 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
         nest() %>%
         mutate(
           adjust_data = map(data,
-          ~ m067cyto_ddbb.stat.p_adjust(
+          ~ amphi_adjust_pvalue(
               phen = .x,
               method = adjust_method,
               trend = trend))) %>%
@@ -867,7 +781,7 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
         df_1 <- df_1 %>%
           mutate(
             stat_method = factor(paste0(stat_tests, ' ~ ', adjust_method))) %>%
-          m067cyto_ddbb.stat.p_adjust(
+          amphi_adjust_pvalue(
             method = adjust_method,
             trend = trend) %>%
             ungroup() %>%
@@ -876,23 +790,15 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
 
       }
 
-      ### save
         l_df[[length(l_df) + 1]] = df_1
     }
 
-
-### update 'list' of 'l_df'
   l_df <- unlist(l_df, recursive = FALSE)
 
-
-### 'list()'
   l_coord <- list()
 
-
-### update for 'l_df' and 'l_coord'
   if(coord_update == TRUE) {
 
-    ### loop ##02 calculates geometric mean through 'm067cyto_ddbb.stat.geomean_ci()'
       for(i in seq_along(vars_y)) {
 
         l_cartesian <- df %>%
@@ -912,7 +818,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
 
           if (stat_tests %in% c('kruskal_wallis', 'welch_oneway')) {
 
-            ### loop##03 to 'join' the list of 'l_df' and 'l_coord'
               for(i in seq_along(l_df)) {
 
                 l_full <- left_join(
@@ -924,7 +829,6 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
 
           } else {
 
-            ### loop ##04 calculates geometric mean through 'm067cyto_ddbb.stat.geomean_ci()'
               for(i in seq_along(l_df)) {
 
                 l_full <- left_join(
@@ -937,33 +841,24 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
                }
             }
 
-      ### save
         l_coord[[length(l_coord) + 1]] = l_full
       }
     }
 
-
-### update 'l_df'
   if(coord_update == TRUE) {
 
-  ### update
     l_df <- l_coord
 
   }
 
-
-### argument 'heatmap_update'
   if(heatmap_update == TRUE & stat_tests == 'dunn' & !missing(vars_stats)) {
 
-  ### calculate robust statistics ('median()')
-    df_robust <- m067cyto_ddbb.stat_summary.descriptive_tab(
+    df_robust <- amphi_summary_table(
       phen = df,
       vars_x = vars_y,
       vars_y = c(gr_nest, vars_x),
       shapiro_test = FALSE)
 
-
-    ### loop#05 update 'df_robust'
       for(i in seq_along(vars_y)) {
 
         df_robust[[i]] <- df_robust[[i]] %>%
@@ -972,24 +867,16 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
 
         }
 
-
-    ### 'bind_rows()' and 'select()' variables
       df_robust <- bind_rows(df_robust)
       df_robust <- df_robust[, names(df_robust) %in% c('vars_y', gr_nest, vars_x, vars_stats)]
 
-
-    ### 'rename_at' the 'vars_x'
       df_robust_gr_01 <- df_robust %>% rename_at(vars(any_of(vars_x)), ~ 'group1')
       df_robust_gr_02 <- df_robust %>% rename_at(vars(any_of(vars_x)), ~ 'group2')
 
-
-    ### list()
       l_df_robust <- list()
 
-      ### loop#06
         for(i in seq_along(l_df)) {
 
-        ### vector to 'rename()' variables
           base_03 <- names(l_df[[i]])
 
           med_names_gr_01 <- c(
@@ -998,24 +885,18 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
           med_names_gr_02 <- c(
             base_03, gr02_q1 = 'q_1', gr02_median = 'median', gr02_q3 = 'q_3', gr02_iqr = 'iqr')
 
-
-          ### 1st 'left_join()' approach
             df_gr_01 <- left_join(
                 l_df[[i]],
                 df_robust_gr_01,
                   by = intersect(names(l_df[[i]]), names(df_robust_gr_01))) %>%
               select(!! med_names_gr_01)
 
-
-          ### 2nd 'left_join()' approach
             df_gr_02 <- left_join(
                 l_df[[i]],
                 df_robust_gr_02,
                   by = intersect(names(l_df[[i]]), names(df_robust_gr_02))) %>%
               select(!! med_names_gr_02)
 
-
-          ### 3rd 'left_join()' approach
             df_1 <- left_join(
               df_gr_01,
               df_gr_02,
@@ -1023,26 +904,159 @@ m067cyto_ddbb.stat.statistical_multitest <- function(
               mutate(
                 median_diff = gr02_median - gr01_median)
 
-
-          ### save
             l_df_robust[[length(l_df_robust) + 1]] = df_1
           }
         }
 
-
-### update 'l_df'
   if(heatmap_update == TRUE & stat_tests == 'dunn' & !missing(vars_stats)) {
 
-    ### update
       l_df <- l_df_robust
 
   }
 
-### 'names()'
   names(l_df) <- l_formula
 
-
-### return
   return(l_df)
 
+}
+
+
+# --- Funcions d'Imputació ---
+
+#' @title Imputa valors perduts en un dataframe.
+#' @description Aquesta funció ofereix diferents mètodes per a la imputació de valors `NA`.
+#' @param df Un `data.frame` o `tibble` d'entrada.
+#' @param ... Paràmetres addicionals per als mètodes d'imputació.
+#' @return Un `tibble` amb els valors imputats.
+#' @export
+amphi_impute <- function(
+  df, 
+  grup_by = NULL,
+  seleccio_variables = NULL,
+  metode_imputacio = c(
+    'mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana', 'missForest', 'MICE', 'kNN'),
+  metode_reserva = 'mediana',
+  valor_trim = .10,
+  retornar_originals = FALSE) 
+{
+  if (!is.data.frame(df) && !tibble::is_tibble(df)) {
+    stop("Argument 'df' ha de ser un data.frame o un tibble.")
+  }
+
+  valid_methods <- c('mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana', 'missForest', 'MICE', 'kNN')
+  if (!metode_imputacio %in% valid_methods) {
+    stop(paste0("Mètode imputació no vàlid. Si us plau, escolliu un dels següents: ", paste(valid_methods, collapse = ', ')))
+  }
+  valid_fallback_methods <- c('mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana')
+  if (!metode_reserva %in% valid_fallback_methods) {
+    stop("El 'metode_reserva' només pot ser un dels mètodes estadístics: 'mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana'.")
+  }
+
+  sel_exp_variables <- rlang::enquo(seleccio_variables)
+  sel_vars_names <- names(dplyr::select(df, !!sel_exp_variables))
+
+  imputar_df_estatistic <- function(data, method) {
+    data_out <- data
+    
+    if (method == 'mitjana_aritmetica') {
+      data_out <- data_out %>%
+        dplyr::mutate(dplyr::across(all_of(sel_vars_names),
+          ~ tidyr::replace_na(., mean(., na.rm = TRUE))))
+    } else if (method == 'mitjana_truncada' & !is.null(valor_trim)) {
+      data_out <- data_out %>%
+        dplyr::mutate(dplyr::across(all_of(sel_vars_names),
+          ~ tidyr::replace_na(., mean(., trim = valor_trim, na.rm = TRUE))))
+    } else if (method == 'mitjana_geometrica') {
+      data_out <- data_out %>%
+        dplyr::mutate(dplyr::across(all_of(sel_vars_names),
+          ~ tidyr::replace_na(. , psych::geometric.mean(., na.rm=TRUE))))
+    } else if (method == 'mitjana_winsoritzada' & !is.null(valor_trim)) {
+      data_out <- data_out %>%
+        dplyr::mutate(dplyr::across(all_of(sel_vars_names),
+          ~ tidyr::replace_na(., psych::winsor.mean(., trim = valor_trim, na.rm = TRUE))))
+    } else if (method == 'mediana') {
+      data_out <- data_out %>%
+        dplyr::mutate(dplyr::across(all_of(sel_vars_names),
+          ~ tidyr::replace_na(., median(., na.rm = TRUE))))
+    }
+    return(data_out)
+  }
+
+  df_imp <- df %>%
+    dplyr::mutate(
+      dplyr::across(where(is.double) | where(is.integer), as.numeric),
+      dplyr::across(where(is.character), as.factor))
+
+  if (metode_imputacio == 'missForest') {
+    if (!requireNamespace('missForest', quietly = TRUE)) {
+      stop("El mètode 'missForest' requereix el paquet 'missForest'. Si us plau, instal·leu-lo amb install.packages('missForest').")
+    }
+    if (!is.null(grup_by)) {
+      warning("El mètode 'missForest' no és compatible amb l'agrupació de dades. S'ignora 'grup_by'.")
+    }
+
+    tryCatch({
+      set.seed(42)
+      df_temp <- df_imp %>% dplyr::select(all_of(sel_vars_names)) %>% as.data.frame()
+      imputed_result <- missForest::missForest(df_temp, maxiter = 10, ntree = 100)
+      df_imp[sel_vars_names] <- imputed_result$ximp
+      warning(paste("Error OOB (NRMSE/PFC) per a missForest:", round(imputed_result$OOBerror['NRMSE'], 4), "/", round(imputed_result$OOBerror['PFC'], 4)))
+
+    }, error = function(e) {
+      warning(paste("Imputació amb 'missForest' ha fallat:", e$message, "S'utilitzarà el mètode de reserva:", metode_reserva))
+      df_imp <- imputar_df_estatistic(df_imp, metode_reserva)
+    })
+
+  } else if (metode_imputacio == 'MICE') {
+    if (!requireNamespace('mice', quietly = TRUE)) {
+      stop("El mètode 'MICE' requereix el paquet 'mice'. Si us plau, instal·leu-lo amb install.packages('mice').")
+    }
+    if (!is.null(grup_by)) {
+      warning("El mètode 'MICE' no és compatible amb l'agrupació de dades. S'ignora 'grup_by'.")
+    }
+
+    tryCatch({
+      set.seed(42)
+      imputed_data <- mice::mice(df_imp, m = 5, maxit = 50, meth = 'pmm', printFlag = FALSE)
+      df_imp <- mice::complete(imputed_data)
+
+    }, error = function(e) {
+      warning(paste("Imputació amb 'MICE' ha fallat:", e$message, "S'utilitzarà el mètode de reserva:", metode_reserva))
+      df_imp <- imputar_df_estatistic(df_imp, metode_reserva)
+    })
+
+  } else if (metode_imputacio == 'kNN') {
+    if (!requireNamespace('VIM', quietly = TRUE)) {
+      stop("El mètode 'kNN' requereix el paquet 'VIM'. Si us plau, instal·leu-lo amb install.packages('VIM').")
+    }
+    if (!is.null(grup_by)) {
+      warning("El mètode 'kNN' no és compatible amb l'agrupació de dades. S'ignora 'grup_by'.")
+    }
+
+    tryCatch({
+      set.seed(42)
+      df_imp <- VIM::kNN(df_imp, k = 5, imp_suffix = 'Imputed')
+
+    }, error = function(e) {
+      warning(paste("Imputació amb 'kNN' ha fallat:", e$message, "S'utilitzarà el mètode de reserva:", metode_reserva))
+      df_imp <- imputar_df_estatistic(df_imp, metode_reserva)
+    })
+
+  } else {
+    if (!is.null(grup_by)) {
+      grup_exp_by <- rlang::syms(grup_by)
+      df_imp <- df_imp %>%
+        dplyr::group_by(!!!grup_exp_by) %>%
+        dplyr::group_modify( ~ imputar_df_estatistic(data = .x, method = metode_imputacio)) %>%
+        dplyr::ungroup()
+    } else {
+      df_imp <- imputar_df_estatistic(df_imp, metode_imputacio)
+    }
+  }
+
+  if (retornar_originals == FALSE) {
+    return(df_imp)
+  } else {
+    return(list(df_imputat = df_imp, df_original = df))
+  }
 }

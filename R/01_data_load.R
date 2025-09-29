@@ -1,5 +1,3 @@
-### 'amphi_list.dir_files()'
-
 #' @title Llista arxius de diferents carpetes de dades.
 #' @description Llista arxius de diferents carpetes de dades donat un 'home_folder'.
 #' @param home_folder Objecte R amb la ruta a les carpetes de dades.
@@ -8,9 +6,9 @@
 #'
 #' @return Una llista d'arxius estructurada per 'carpetes' anomenades.
 #' 
-#' @rdname amphi_list.dir_files
+#' @rdname amphi_list_files
 #' @export
-amphi_list.dir_files <- function(
+amphi_list_files <- function(
     home_folder,
     recursive = TRUE,
     pattern = c('xlsx', 'xls', 'csv'))
@@ -68,45 +66,30 @@ amphi_list.dir_files <- function(
 ### Nom de la llista
 	names(l_files) <- basename(l_dir)
 
-### Guarda un únic element 'l_files'
-  rm(list = setdiff(ls(), 'l_files'))
-
-
 ### Rerornar la llista
 	return(l_files)
 }
 
 
-### 'amphi_func.read_data()'
-
-#' Loads data in several extension formats as description mentions.
-#' @inheritParams readxl::excel_sheets
-#' @inheritParams readxl::read_excel
-#' @inheritParams data.table::fread
-#' @description This function reads a list of files, supporting both Excel (.xls, .xlsx) and .csv formats.
-#' It automatically detects the file type based on the file extension.
-#' @param l_files Una llista d'arxius obtinguda de 'amphi_list.dir_files'.
+#' @title Llegeix dades en diversos formats
+#' @description Aquesta funció llegeix una llista de fitxers, suportant formats Excel (.xls, .xlsx) i .csv.
+#' Detecta automàticament el tipus de fitxer per la seva extensió.
+#' @param l_files Una llista d'arxius obtinguda de 'amphi_list_files'.
 #' @param type_file El tipus d'arxiu a llegir ('excel' o 'csv').
-#' @param sep The field separator character for CSV files. Defaults to NULL (auto-detect).
-#' @param dec The decimal separator character for CSV files. Defaults to NULL (auto-detect).
-#' @param skip_rows (integer, per defecte 0) Nombre de files a saltar en la lectura. Només per a 'excel'.
-#' @param na_strings na_strings Vector de cadenes de text per identificar com a NA. Només per a 'csv'.
-#' @param clean_names (logical, default TRUE) Whether to clean column names using `janitor::clean_names`.
+#' @param sep El separador de camps per a fitxers CSV. Per defecte, NULL (auto-detecció).
+#' @param dec El separador decimal per a fitxers CSV. Per defecte, NULL (auto-detecció).
+#' @param skip_rows Nombre de files a ometre en la lectura (només per a Excel).
+#' @param na_strings Vector de cadenes de text per a identificar com a NA (només per a CSV).
+#' @param clean_names Lògic. Si és TRUE, neteja els noms de les columnes amb `janitor::clean_names`.
 #' 
-#' @return A list of dataset in 'data.frame' format.
+#' @return Una llista de data.frames.
 #' 
 #' @importFrom readxl excel_sheets read_excel
 #' @importFrom data.table fread
 #' @importFrom janitor clean_names
-#' @seealso \code{\link[readxl]{excel_sheets}}
-#' @seealso \code{\link[readxl]{read_excel}}
-#' @seealso \code{\link[data.table]{fread}}
-#' @seealso \code{\link[data.table]{fread}}
-#' @seealso \code{\link[janitor]{clean_names}}
-#' 
-#' @rdname amphi_load.read_files
+#' @rdname amphi_read_data
 #' @export
-amphi_load.read_data <- function(
+amphi_read_data <- function(
   l_files,
   type_file = c('excel', 'csv'),
   sep = NULL,
@@ -114,11 +97,6 @@ amphi_load.read_data <- function(
   skip_rows = 0,
   na_strings = NULL,
   clean_names = TRUE) {
-
-### packages required
-  amphi_tool.required_packages(
-    locale = 'es_ES.UTF-8',
-    update_packages = FALSE)
 
 ### 1st double check
   if (!is.character(l_files) || length(l_files) == 0) {
@@ -159,10 +137,10 @@ amphi_load.read_data <- function(
 
 		  df <- lapply(l_files[[i]],
   		  data.table::fread,
-  			sep = sep,
-  			dec = dec,
+					sep = sep,
+					dec = dec,
         skip = skip_rows,
-  			na.strings = csv_na_strings)
+					na.strings = csv_na_strings)
 
   	}
 
@@ -185,10 +163,6 @@ amphi_load.read_data <- function(
 
 	  }
   }
-
-### kept only the return elements in the environment
-  rm(list = setdiff(ls(), 'l_df'))
-
 
 ### return
 	return(l_df)

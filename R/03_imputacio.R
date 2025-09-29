@@ -1,4 +1,4 @@
-### amphi_func.imputar_val_perduts
+### imputacio_val_perduts
 
 #' @title Funció per a la imputació de valors perduts en un dataframe.
 #' @description Aquesta funció ofereix diferents mètodes per a la imputació de valors `NA` en un `data.frame` o `tibble`, incloent-hi mètodes estadístics simples i tècniques avançades com `missForest`, `MICE` i `kNN`. Permet agrupar les dades per a mètodes estadístics i ofereix opcions per retornar les dades originals i imputades. Si `missForest`, `MICE` o `kNN` fallen, la funció utilitzarà el mètode d'imputació de reserva especificat.
@@ -58,33 +58,33 @@
 #' # ---
 #'
 #' # Exemple 1: Imputació amb la Mitjana Aritmètica
-#' df_mitjana <- amphi_func.imputar_val_perduts(
+#' df_mitjana <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   metode_imputacio = 'mitjana_aritmetica')
 #'
 #' # Exemple 2: Imputació amb la Mediana, agrupant per 'nom'
-#' df_mediana_grup <- amphi_func.imputar_val_perduts(
+#' df_mediana_grup <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   grup_by = nom,
 #'   metode_imputacio = 'mediana')
 #'
 #' # Exemple 3: Imputació amb la Mitjana Geomètrica
-#' df_geometrica <- amphi_func.imputar_val_perduts(
+#' df_geometrica <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   metode_imputacio = 'mitjana_geometrica')
 #'
 #' # Exemple 4: Imputació amb la Mitjana Truncada
-#' df_truncada <- amphi_func.imputar_val_perduts(
+#' df_truncada <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   metode_imputacio = 'mitjana_truncada',
 #'   valor_trim = 0.2)
 #'
 #' # Exemple 5: Imputació amb la Mitjana Winsoritzada
-#' df_winsoritzada <- amphi_func.imputar_val_perduts(
+#' df_winsoritzada <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   metode_imputacio = 'mitjana_winsoritzada',
@@ -96,7 +96,7 @@
 #'
 #' # Exemple 6: Imputació amb missForest
 #' # Nota: missForest funciona millor amb dades numèriques i categòriques ben definides.
-#' df_missForest <- amphi_func.imputar_val_perduts(
+#' df_missForest <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   grup_by = c('index_id', 'nom'),
 #'   seleccio_variables = c(starts_with('amplada'), starts_with('alcada')),
@@ -105,7 +105,7 @@
 #'   valor_trim = 0.05)
 #'
 #' # Exemple 7: Imputació amb MICE
-#' df_mice <- amphi_func.imputar_val_perduts(
+#' df_mice <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena, alcada_general),
 #'   metode_imputacio = 'MICE',
@@ -113,17 +113,17 @@
 #' )
 #'
 #' # Exemple 8: Imputació amb kNN
-#' df_knn <- amphi_func.imputar_val_perduts(
+#' df_knn <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena, alcada_general),
 #'   metode_imputacio = 'kNN',
 #'   metode_reserva = 'mediana'
 #' )
 #'
-#' @rdname amphi_func.imputar_val_perduts
+#' @rdname imputacio_val_perduts
 #'
 #' @export
-amphi_func.imputar_val_perduts <- function(
+imputacio_val_perduts <- function(
   df, 
   grup_by = NULL,
   seleccio_variables = NULL,

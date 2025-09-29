@@ -20,7 +20,7 @@
 #'
 #' @return Un dataframe de R (o una llista de dataframes) amb les dades fusionades i estructurades dels amfiteatres romans i republicans.
 #'
-#' @rdname taules_dimensions
+#' @rdname load_dimensions_vazquez
 #' 
 #' @import dplyr
 #' @import tibble
@@ -34,14 +34,14 @@
 #'
 #' @examples
 #' # Exemple 1: Carregar i fusionar tots els dataframes
-#' # df_complet <- taules_dimensions()
+#' # df_complet <- load_dimensions_vazquez()
 #' 
 #' # Exemple 2: Carregar i filtrar per tipus d'edifici específic
-#' # df_filtrat <- taules_dimensions(
+#' # df_filtrat <- load_dimensions_vazquez(
 #' #  filtrar_edifici = 'amphitheater')
 #' 
 #' # Exemple 3: Carregar i seleccionar columnes específiques
-#' # df_hispania_sel <- taules_dimensions(
+#' # df_hispania_sel <- load_dimensions_vazquez(
 #' #  filtrar_edifici = 'amphitheater',
 #' #  filtrar_provincia = 'hispania',
 #' #  filtrar_pais = NULL,
@@ -49,7 +49,7 @@
 #' #  retornar_originals = FALSE)
 #' 
 #' #' # Exemple 4: Incompatibilitat entre `filtrar_provincia` i `filtrar_pais`
-#' # df_spain_france_sel <- taules_dimensions(
+#' # df_spain_france_sel <- load_dimensions_vazquez(
 #' #  filtrar_edifici = 'amphitheater',
 #' #  filtrar_provincia = NULL,
 #' #  filtrar_pais = c('spain', 'france'),
@@ -57,7 +57,7 @@
 #' #  retornar_originals = FALSE)
 #'
 #' @export
-taules_dimensions <- function(
+load_dimensions_vazquez <- function(
   seleccionar_columnes = NULL,
   filtrar_edifici = NULL,
   filtrar_provincia = NULL,
@@ -74,8 +74,8 @@ taules_dimensions <- function(
 
 ### Carrega de paquets requerits
 ### Carrega de funcions necessaries
-  source('R/00_v_2025_07_23_setup_dir.R')
-  source('R/01_v_2025_07_23_setup_load.R')
+  source('R/00_setup.R')
+  source('R/01_data_load.R')
 
   # Captura d'expressions amb rlang
   seleccionar_columnes <- rlang::enquo(seleccionar_columnes)
@@ -83,18 +83,17 @@ taules_dimensions <- function(
   filtrar_pais_quo <- rlang::enquo(filtrar_pais)
 
 ### Carrega de paquets
-  amphi_tool.required_packages(
-    locale = 'es_ES.UTF-8',
+  amphi_load_packages(
     update_packages = FALSE)
 
 ### Carrega de fitxers
-  l_fitxers <- amphi_list.dir_files(
+  l_fitxers <- amphi_list_files(
 	  home_folder = 'data/02_data_vazquez',
     recursive = TRUE,
     pattern = 'csv')[[1]][-1]
 
 ### Carrega de dades
-  l_data_vazquez <- amphi_load.read_data(
+  l_data_vazquez <- amphi_read_data(
     l_files = l_fitxers,
     type_file = 'csv',
     sep = ';',
@@ -187,10 +186,20 @@ taules_dimensions <- function(
 
   if (retornar_originals) {
 
+    # missatge
+    cat(
+      crayon::bold(crayon::blue('i')),
+      crayon::black(' El llistat de dades ha estat carregat correctament\n'))
+
     return(list(df_fusionat = df_data_vazquez, l_originals = l_data_vazquez))
 
   } else {
 
+    # missatge
+    cat(
+      crayon::bold(crayon::blue('i')),
+      crayon::black(' Les dades ha estat carregat correctament\n'))
+    
     return(df_data_vazquez)
   
   }

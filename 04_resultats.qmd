@@ -5,24 +5,23 @@
 # S'encarrega de carregar totes les dades i preparar els objectes necessaris.
 
 # 1. Carreguem funcions i paquets
-source('R/00_v_2025_07_23_setup_dir.R')
-source('data/01_data_golvin/00_v_2025_07_17_dimensions_amfiteatres_golvin.R')
-source('data/02_data_vazquez/00_v_2025_07_23_dimensions_amfiteatres_vazquez.R')
-source('R/02_v_2025_08_23_tab_summary.R')
+source('R/00_setup.R')
+source('data/01_data_golvin/00_dimensions_amfiteatres_golvin.R')
+source('data/02_data_vazquez/00_dimensions_amfiteatres_vazquez.R')
+source('R/02_tab_summary.R')
 
 
-amphi_tool.required_packages(
-  locale = 'es_ES.UTF-8',
+amphi_load_packages(
   update_packages = FALSE)
 
 # 2. Creem les matrius de dades
-df_golvin <- tableau_dimensions(
+df_golvin <- load_dimensions_golvin(
   filtrar_provincia = c('hispania', 'panonnia', 'britannia'),
   filtrar_pais = NULL,
   seleccionar_columnes = NULL,
   retornar_originals = FALSE)
 
-df_vazquez <- taules_dimensions(
+df_vazquez <- load_dimensions_vazquez(
   filtrar_edifici = 'amphitheater',
   filtrar_pais = NULL,
   filtrar_provincia = c('hispania', 'panonnia', 'britannia'),
@@ -30,7 +29,7 @@ df_vazquez <- taules_dimensions(
   retornar_originals = FALSE)
 
 # 3. Generem les llistes de taules de resum
-tab_01 <- amphi_func.tab_summary(
+tab_01 <- tab_summary(
   df = df_golvin,
   grup_by = 'nom',
   stats_adicionals = FALSE,
@@ -39,7 +38,7 @@ tab_01 <- amphi_func.tab_summary(
   bind_rows = FALSE,
   digits = 1)
 
-tab_02 <- amphi_func.tab_summary(
+tab_02 <- tab_summary(
   df = df_vazquez,
   grup_by = 'nom',
   stats_adicionals = FALSE,

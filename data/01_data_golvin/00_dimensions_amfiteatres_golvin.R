@@ -16,7 +16,7 @@
 #' 
 #' @return Un dataframe de R (o una llista de dataframes) amb les dades fusionades i estructurades dels amfiteatres romans i republicans.
 #' 
-#' @rdname tableau_dimensions
+#' @rdname load_dimensions_golvin
 #' 
 #' @import dplyr
 #' @import tibble
@@ -30,7 +30,7 @@
 #' 
 #' @examples
 #' # Exemple 1: Carregar i fusionar tots els dataframes
-#' # df_complet <- tableau_dimensions()
+#' # df_complet <- load_dimensions_golvin()
 #' 
 #' # Exemple 2: Carregar i seleccionar columnes específiques
 #' # df_filtrat <- tableau_dimension(
@@ -38,14 +38,14 @@
 #' #  retornar_originals = FALSE)
 #' 
 #' # Exemple 3: Carregar i seleccionar columnes específiques
-#' # df_columnes_sel <- tableau_dimensions(
+#' # df_columnes_sel <- load_dimensions_golvin(
 #' #  filtrar_provincia = 'hispania',
 #' #  filtrar_pais = NULL,
 #' #  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), 'bib'), 
 #' #  retornar_originals = FALSE)
 #' 
 #' @export
-tableau_dimensions <- function(
+load_dimensions_golvin <- function(
   filtrar_provincia = NULL,
   filtrar_pais = NULL,
   seleccionar_columnes = NULL,
@@ -61,14 +61,13 @@ tableau_dimensions <- function(
 
 ### Carrega de paquets requerits
 ### Carrega de funcions necessaries
-  source('R/00_v_2025_07_23_setup_dir.R')
-  source('R/01_v_2025_07_23_setup_load.R')
+  source('R/00_setup.R')
+  source('R/01_data_load.R')
 
   seleccionar_columnes <- rlang::enquo(seleccionar_columnes)
 
 ### Carrega de paquets
-  amphi_tool.required_packages(
-    locale = 'es_ES.UTF-8',
+  amphi_load_packages(
     update_packages = FALSE)
 
   ### Extracció i càlculs de la taula d'amfiteatres romans
@@ -634,11 +633,21 @@ tableau_dimensions <- function(
     dplyr::arrange('index_id', 'nom',  'provincia_romana', 'pais')
 
 
-  if (retornar_originals) {
+  if (isTRUE(retornar_originals)) {
+
+  # missatge
+    cat(
+      crayon::bold(crayon::blue('i')),
+      crayon::black(' El llistat de dades ha estat carregat correctament\n'))
 
     return(l_tableau)
 
   } else {
+
+    # missatge
+    cat(
+      crayon::bold(crayon::blue('i')),
+      crayon::black(' Les dades ha estat carregat correctament\n'))
 
     return(taula_fusionada)
     
