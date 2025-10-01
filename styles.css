@@ -1,0 +1,10 @@
+/* Importar la font EB Garamond de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* Aplicar la font al cos del document i ajustar la mida */
+body {
+  font-family: 'EB Garamond', serif;
+  /* La mida de 12pt en PDF equival aproximadament a 1rem en web,
+     que és la mida per defecte dels navegadors. */
+  font-size: 1rem; 
+}

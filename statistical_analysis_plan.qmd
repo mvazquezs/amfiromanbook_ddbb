@@ -1,0 +1,112 @@
+---
+title: "Pla d'Anàlisi Estadística (SAP)"
+subtitle: "Projecte Amfiteatres Romans (amfiroman_ddbb)"
+format:
+  html:
+    toc: true
+    theme: united
+  pdf:
+    include-in-header: sap-style.tex
+---
+
+## 1. Introducció
+# Pla d'Anàlisi Estadística
+
+Aquest document detalla el pla d'anàlisi estadística per al projecte `amfiroman_ddbb`. L'objectiu principal del projecte és analitzar les dimensions dels amfiteatres romans per identificar patrons, relacions i diferències significatives entre diferents grups geogràfics o tipològics.
+Aquest document detalla el pla d'anàlisi estadística (SAP) que es seguirà en aquest estudi.
+
+Aquest pla es redacta abans de l'execució de l'anàlisi final per garantir la transparència i la reproductibilitat de la investigació.
+## 1. Hipòtesis de Recerca
+
+### 1.1. Preguntes de Recerca
+Les hipòtesis principals són...
+
+Les preguntes de recerca que guien aquest treball són:
+## 2. Metodologia Estadística
+
+1.  **Caracterització dimensional:** Quines són les dimensions típiques (i la seva variabilitat) dels amfiteatres romans pel que fa a l'arena, la càvea i les mides generals?
+2.  **Diferències provincials:** Existeixen diferències estadísticament significatives en les dimensions dels amfiteatres segons la província romana on es van construir?
+3.  **Identificació de tipologies:** Podem identificar grups o tipologies d'amfiteatres basant-nos en les proporcions entre les seves dimensions (p. ex., la ràtio entre l'arena i l'edifici)?
+Les proves estadístiques que s'aplicaran seran...
+
+## 2. Dades
+
+### 2.1. Fonts de Dades
+
+Les dades provenen de la compilació de diverses fonts acadèmiques, principalment de les bases de dades de J.C. Golvin i M. Vàzquez.
+
+### 2.2. Variables d'Estudi
+
+Les variables clau per a l'anàlisi són:
+
+*   **Variables Primàries (Numèriques):**
+    *   `amplada_general`: Amplada total de l'amfiteatre.
+    *   `alcada_general`: Alçada total de l'amfiteatre.
+    *   `amplada_arena`: Amplada de l'arena.
+    *   `alcada_arena`: Alçada de l'arena.
+    *   `amplada_cavea`: Amplada de la càvea.
+
+*   **Variables Derivades (Ràtios):** Es crearan noves variables per analitzar proporcions, com `ratio_arena_edifici = amplada_arena / amplada_general`.
+
+*   **Variables Agrupadores (Categòriques):**
+    *   `nom`: Nom de l'amfiteatre.
+    *   `provincia_romana`: Província romana on es troba l'amfiteatre.
+    *   `pais`: País actual.
+
+## 3. Preparació de les Dades
+
+### 3.1. Gestió de Dades Absents
+
+La presència de valors absents (`NA`) serà avaluada per a cada variable. S'utilitzaran mètodes d'imputació per completar el conjunt de dades i permetre l'ús de tècniques d'anàlisi multivariant.
+
+*   **Mètode d'Imputació:** S'exploraran mètodes avançats com `missForest` (basat en Random Forest), `MICE` (Imputació Múltiple per Equacions Encadenades) o `kNN` (K-Veïns Més Propers), disponibles a la funció `imputacio_val_perduts`.
+*   **Mètode de Reserva:** En cas que els mètodes avançats fallin o no siguin apropiats, s'utilitzarà un mètode de reserva més simple, com la imputació per la `mediana` o la `mitjana`, possiblement agrupant per una variable rellevant (`grup_by`).
+*   **Avaluació:** Es compararà la distribució de les variables abans i després de la imputació per avaluar-ne l'impacte.
+
+## 4. Mètodes Estadístics
+
+### 4.1. Anàlisi Descriptiva
+
+Aquesta secció abordarà la **pregunta de recerca 1 (Caracterització dimensional)**.
+
+L'anàlisi descriptiva es realitzarà per resumir les característiques principals del conjunt de dades.
+
+*   **Variables Numèriques:** Es calcularan estadístics de resum utilitzant la funció `tab_summary`. Aquests inclouran: recompte (n), valors absents (na), mitjana, mediana, desviació estàndard (sd), rang interquartílic (IQR), mínim, màxim, asimetria (skewness) i curtosi (kurtosis).
+*   **Variables Categòriques:** Es presentaran en taules de freqüència (recomptes i percentatges). S'utilitzarà la funció `amphi_crosstab` per crear taules de contingència i explorar l'associació entre elles.
+*   **Visualització:** Es generaran histogrames i gràfics de densitat per visualitzar la distribució de les variables numèriques, i diagrames de caixes (`boxplots`) per comparar les distribucions entre grups.
+
+### 4.2. Anàlisi Inferencial per a Diferències Provincials
+
+Aquesta secció abordarà principalment la **pregunta de recerca 2 (Diferències provincials)**.
+
+L'anàlisi inferencial es durà a terme per identificar diferències estadísticament significatives en les dimensions dels amfiteatres entre els grups definits per les variables categòriques.
+
+*   **Normalitat:** Es comprovarà la normalitat de les distribucions (p. ex., amb el test de Shapiro-Wilk, disponible a `tab_summary`) per decidir entre proves paramètriques i no paramètriques.
+
+*   **Comparació de Dos Grups:**
+    *   **Prova:** S'utilitzarà el T-test de Student (dades normals) o el test de Wilcoxon (dades no normals).
+    *   **Funció:** `amphi_stat_test`.
+
+*   **Comparació de Més de Dos Grups:**
+    *   **Prova:** S'utilitzarà ANOVA (o Welch ANOVA) per a dades normals, o el test de Kruskal-Wallis per a dades no paramètriques.
+    *   **Funció:** `amphi_stat_multitest`.
+
+*   **Proves Post-Hoc:**
+    *   **Proves:** Test de Games-Howell (per a Welch ANOVA) o test de Dunn (per a Kruskal-Wallis).
+    *   **Funció:** `amphi_stat_multitest`.
+
+*   **Ajust de p-values:** S'ajustaran amb mètodes com Bonferroni, Holm o FDR (`BH`) mitjançant la funció `amphi_adjust_pvalue`.
+
+### 4.3. Anàlisi de Tipologies
+
+Aquesta secció abordarà la **pregunta de recerca 3 (Identificació de tipologies)**.
+
+*   **Creació de Ràtios:** Es generaran noves variables calculant les ràtios entre dimensions clau (p. ex., `amplada_arena / amplada_general`).
+*   **Anàlisi de les Ràtios:** Aquestes noves variables seran analitzades seguint els mateixos passos descrits a les seccions 4.1 i 4.2: anàlisi descriptiva per entendre la seva distribució i anàlisi inferencial per comprovar si les proporcions difereixen entre províncies.
+
+## 5. Programari
+
+Totes les anàlisis es realitzaran amb el llenguatge de programació **R** (versió 4.0 o superior) i l'entorn de desenvolupament **RStudio**. El report final serà generat amb **Quarto**.
+```{{=latex}}
+\restoredefaultstyles
+```

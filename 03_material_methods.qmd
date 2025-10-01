@@ -1,1 +1,48 @@
-# Material and Methods
+# Material i Mètodes
+
+En aquest capítol es detallen els procediments utilitzats per a la recopilació de dades, la seva preparació i l'anàlisi estadística duta a terme per respondre a les preguntes de recerca plantejades.
+
+## Fonts de Dades i Construcció de la Base de Dades
+
+La base de dades d'aquest estudi (`amfiroman_ddbb`) és el resultat d'un procés de compilació de fonts publicades. La font principal és el catàleg d'amfiteatres de Jean-Claude Golvin (@golvin1988amphitheatre), una referència fonamental en aquest camp. Aquesta informació ha estat complementada i contrastada amb altres treballs acadèmics i bases de dades més recents per tal d'obtenir un conjunt de dades el més complet i actualitzat possible.
+
+Les variables recollides per a cada amfiteatre inclouen:
+
+*   **Identificadors:** Nom de la ciutat romana (`nom`), país actual (`pais`).
+*   **Geogràfics:** Província romana (`provincia_romana`).
+*   **Dimensionals (en metres):** `amplada_general`, `alcada_general`, `amplada_arena`, `alcada_arena`, i `amplada_cavea`.
+
+## Processament i Preparació de les Dades
+
+Tot el processament i anàlisi de dades s'ha realitzat amb el llenguatge de programació R [@R-base] i l'entorn RStudio. Els informes s'han generat amb Quarto [@quarto-web]. Per a la manipulació de dades i la visualització es van utilitzar principalment els paquets `dplyr` [@dplyr] i `ggplot2` [@ggplot2]. Les proves estadístiques es van realitzar amb funcions del paquet `rstatix` [@rstatix] i la imputació de dades amb `mice` [@mice] i `missForest` [@stekhoven2012missforest].
+
+### Gestió de Dades Absents
+
+Un dels reptes en treballar amb dades arqueològiques és la presència de valors absents (`NA`), degut a l'estat de conservació desigual dels monuments. Per tal de poder aplicar anàlisis multivariants sense perdre un gran nombre de casos, es va optar per un mètode d'imputació de dades.
+
+El mètode seleccionat va ser `missForest` [@stekhoven2012missforest], implementat a la funció `imputacio_val_perduts`. Aquest és un algorisme no paramètric basat en *Random Forest* que funciona bé amb interaccions complexes i relacions no lineals entre variables, sense fer suposicions sobre la distribució de les dades. Com a mètode de reserva en cas d'error, es va establir la imputació per la `mediana`.
+
+L'impacte de la imputació en la distribució de les variables s'avaluarà mitjançant la comparació de gràfics de densitat de les dades originals i les imputades.
+
+## Anàlisi Estadística
+
+L'estratègia d'anàlisi es va dissenyar per donar resposta a les preguntes de recerca definides a la introducció, seguint el Pla d'Anàlisi Estadística.
+
+### Anàlisi Descriptiva (RQ1)
+
+Per respondre a la primera pregunta de recerca sobre la **caracterització dimensional** dels amfiteatres, es va realitzar una anàlisi descriptiva exhaustiva. Es van calcular els principals estadístics (mitjana, mediana, desviació estàndard, quartils, etc.) per a totes les variables dimensionals, utilitzant la funció `tab_summary`. A més, es van generar histogrames i gràfics de densitat per visualitzar les seves distribucions.
+
+### Anàlisi de Tipologies (RQ3)
+
+Per explorar la **identificació de tipologies**, es van crear noves variables basades en les ràtios entre dimensions principals, com ara la proporció entre l'amplada de l'arena i l'amplada general de l'edifici. Aquestes noves variables de ràtio van ser analitzades descriptivament per identificar possibles agrupacions.
+
+### Anàlisi Inferencial (RQ2)
+
+Per abordar la segona pregunta de recerca sobre les **diferències provincials**, es va dur a terme una anàlisi inferencial. La selecció de les proves estadístiques es va basar en el compliment del supòsit de normalitat, avaluat amb el test de Shapiro-Wilk.
+
+*   **Comparació de grups:** Per a la comparació de les dimensions entre províncies romanes, es van utilitzar proves no paramètriques, atesa la distribució generalment no normal de les dades. Concretament:
+    *   **Test de Kruskal-Wallis:** Per comparar les mitjanes de més de dos grups (p. ex., l'amplada general entre totes les províncies). Funció: `amphi_stat_multitest`.
+    *   **Test de Dunn:** Com a prova *post-hoc* per identificar quines províncies específiques difereixen entre si, en cas que el test de Kruskal-Wallis fos significatiu.
+    *   **Ajust de p-valor:** Els p-valors de les comparacions múltiples es van ajustar amb el mètode de Bonferroni per controlar la taxa d'error de tipus I. Funció: `amphi_adjust_pvalue`.
+
+*   **Test de Wilcoxon:** Per a comparacions específiques entre dos grups. Funció: `amphi_stat_test`.

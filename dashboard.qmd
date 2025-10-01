@@ -1,0 +1,195 @@
+---
+title: "Dashboard: Amfiteatres Romans"
+format: 
+  dashboard:
+    theme: united
+    orientation: columns
+    sidebar:
+      width: 250
+---
+
+```{r setup, include=FALSE}
+# Aquest bloc de codi és per carregar les llibreries i les dades.
+# S'executarà un cop al principi.
+
+# Llibreries per a les dades i els gràfics
+library(tidyverse)
+library(plotly)
+library(crosstalk)
+
+# Aquí hauries de carregar les teves dades.
+# Per exemple, suposant que tens un fitxer CSV o un script que crea 'df_amfiteatres_imputat'
+# df_amfiteatres <- read_csv("data/amfiteatres_complet.csv") 
+# Per ara, utilitzarem dades de mostra basades en el que hem vist.
+df_amfiteatres <- tibble::tibble(
+  nom = c("CARMO", "ITALICA", "EMERITA", "NEAPOLIS", "ROMA"),
+  provincia_romana = c("hispania_baetica", "hispania_baetica", "hispania_lusitania", "italia", "italia"),
+  pais = c("spain", "spain", "spain", "italy", "italy"),
+  amplada_general = c(108, 156, 128, 130, 188),
+  amplada_arena = c(58.8, 71, 60, 65, 76),
+  alcada_general = c(98, 130, 100, 110, 150),
+  alcada_arena = c(38.6, 45, 40, 42, 50)
+) %>%
+  mutate(
+    ratio_arena_edifici = amplada_arena / amplada_general,
+    ratio_alcada_edifici = alcada_arena / alcada_general
+    )
+
+# Dades compartides per a interactivitat
+shared_df <- SharedData$new(df_amfiteatres, ~provincia_romana)
+```
+
+# Visió General {nav-title="Visió General"}
+
+## Columna 1 {width=300}
+
+### Indicadors Clau
+
+```{r}
+#| component: valuebox
+list(
+  icon = "building",
+  color = "primary",
+  value = nrow(df_amfiteatres),
+  subtitle = "Amfiteatres a la mostra"
+)
+```
+
+```{r}
+#| component: valuebox
+list(
+  icon = "map-location-dot",
+  color = "info",
+  value = n_distinct(df_amfiteatres$provincia_romana),
+  subtitle = "Províncies Romanes"
+)
+```
+
+```{r}
+#| component: valuebox
+list(
+  icon = "ruler-horizontal",
+  color = "secondary",
+  value = paste(round(mean(df_amfiteatres$amplada_general, na.rm = TRUE)), "m"),
+  subtitle = "Amplada mitjana"
+)
+```
+
+## Columna 2
+
+### Amfiteatres per Província
+
+```{r}
+# Gràfic de barres interactiu amb Plotly
+plot_ly(shared_df, y = ~provincia_romana, type = 'histogram') %>%
+  layout(
+    title = "Recompte d'amfiteatres per Província",
+    yaxis = list(title = ""),
+    xaxis = list(title = "Recompte")
+  )
+```
+
+### Filtres
+
+```{r}
+# Filtre interactiu que afecta a tots els gràfics d'aquesta pàgina
+filter_select(
+  "provincia_filter", "Filtra per Província:",
+  shared_df, ~provincia_romana
+)
+```
+
+# Anàlisi Dimensional {nav-title="Anàlisi Dimensional"}
+
+## Columna 1 {.sidebar}
+
+### Controls d'Anàlisi
+
+```{r}
+# Selector per a la mètrica a visualitzar
+selectInput(
+  "metrica_dim", "Selecciona una dimensió:",
+  choices = c("amplada_general", "alcada_general", "amplada_arena", "alcada_arena"),
+  selected = "amplada_general"
+)
+```
+
+## Columna 2
+
+### Distribució de la Dimensió
+
+```{r}
+# Histograma interactiu que canvia segons la selecció
+renderPlotly({
+  plot_ly(df_amfiteatres, x = ~get(input$metrica_dim()), type = "histogram") %>%
+    layout(
+      title = paste("Distribució de", input$metrica_dim()),
+      xaxis = list(title = "Metres"),
+      yaxis = list(title = "Recompte")
+    )
+})
+```
+
+### Comparativa per Província
+
+```{r}
+# Boxplot interactiu que canvia segons la selecció
+renderPlotly({
+  plot_ly(df_amfiteatres, x = ~provincia_romana, y = ~get(input$metrica_dim()), type = "box") %>%
+    layout(
+      title = paste("Comparativa de", input$metrica_dim(), "per Província"),
+      xaxis = list(title = ""),
+      yaxis = list(title = "Metres")
+    )
+})
+```
+
+# Anàlisi de Proporcions {nav-title="Anàlisi de Proporcions"}
+
+## Columna 1 {.sidebar}
+
+### Controls d'Anàlisi
+
+```{r}
+# Selector per a la ràtio a visualitzar
+selectInput(
+  "ratio_select", "Selecciona una ràtio:",
+  choices = c("ratio_arena_edifici", "ratio_alcada_edifici"),
+  selected = "ratio_arena_edifici"
+)
+```
+
+## Columna 2
+
+### Relació entre Amplada i Alçada de l'Arena
+
+```{r}
+# Gràfic de dispersió interactiu
+plot_ly(
+  data = df_amfiteatres,
+  x = ~alcada_arena, 
+  y = ~amplada_arena, 
+  color = ~provincia_romana,
+  text = ~nom,
+  hoverinfo = 'text'
+) %>%
+ layout(
+  title = "Relació Alçada vs. Amplada de l'Arena",
+  xaxis = list(title = "Alçada de l'Arena (m)"),
+  yaxis = list(title = "Amplada de l'Arena (m)")
+)
+```
+
+### Distribució de la Ràtio
+
+```{r}
+# Histograma interactiu per a la ràtio seleccionada
+renderPlotly({
+  plot_ly(df_amfiteatres, x = ~get(input$ratio_select()), type = "histogram") %>%
+    layout(
+      title = paste("Distribució de la", input$ratio_select()),
+      xaxis = list(title = "Ràtio"),
+      yaxis = list(title = "Recompte")
+    )
+})
+```

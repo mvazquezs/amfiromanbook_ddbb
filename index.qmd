@@ -1,9 +1,19 @@
-# Índex {.unnumbered}
+# Prefaci {-}
 
-This is a Quarto book.
+Benvingut a aquest estudi sobre els amfiteatres de l'antiga Roma, una exploració que neix de la fascinació per aquestes grans obres d'enginyeria i de la voluntat d'entendre-les a través d'una nova perspectiva: l'anàlisi quantitativa.
 
-To learn more about Quarto books visit <https://quarto.org/docs/books>.
+Durant segles, aquests edificis han estat estudiats des de l'arqueologia, la història i la història de l'art. Hem après sobre els espectacles que acollien, les tècniques constructives que els van fer possibles i el seu paper com a centres de la vida social i política de les ciutats romanes. No obstant això, moltes preguntes sobre les seves dimensions i proporcions a gran escala romanen obertes.
 
-```{r}
-1 + 1
-```
+Responien tots els amfiteatres a un únic cànon arquitectònic? Fins a quin punt variaven les seves dimensions segons la província on es construïen? Podem identificar "famílies" o tipologies d'amfiteatres a partir de la seva mètrica?
+
+Aquest treball intenta abordar aquestes qüestions mitjançant la recopilació i l'anàlisi estadística d'una base de dades dimensional. Lluny de pretendre substituir els estudis tradicionals, l'objectiu és complementar-los, oferint una visió panoràmica que permeti identificar tendències i patrons a una escala que l'estudi de cas aïllat no pot abastar.
+
+Espero que el lector trobi en aquestes pàgines una aproximació interessant i enriquidora a un dels llegats més impressionants del món romà.
+
+<br>
+
+*Miquel Vàzquez-Santiago*
+
+*Setembre de 2025*
+
+![Imatge de coberta](cover.png){fig-align="center" width="80%"}

@@ -1,67 +1,163 @@
 # Resultats
 
-```{r setup, include = FALSE}
-# Aquest bloc de codi s'executa primer però no es mostra al document final.
-# S'encarrega de carregar totes les dades i preparar els objectes necessaris.
+En aquest capítol, presentem els resultats de l'anàlisi de les dimensions dels amfiteatres romans. L'exposició s'estructura en tres parts principals: una anàlisi descriptiva de les dades, el procés d'imputació de valors perduts i, finalment, l'anàlisi inferencial per a la comparació entre grups.
 
-# 1. Carreguem funcions i paquets
-source('R/00_setup.R')
-source('data/01_data_golvin/00_dimensions_amfiteatres_golvin.R')
-source('data/02_data_vazquez/00_dimensions_amfiteatres_vazquez.R')
-source('R/02_tab_summary.R')
+## Anàlisi Descriptiva
 
+Comencem amb una exploració de les dades per entendre les seves característiques principals.
 
-amphi_load_packages(
-  update_packages = FALSE)
+### Estadístiques Descriptives
 
-# 2. Creem les matrius de dades
-df_golvin <- load_dimensions_golvin(
-  filtrar_provincia = c('hispania', 'panonnia', 'britannia'),
-  filtrar_pais = NULL,
-  seleccionar_columnes = NULL,
-  retornar_originals = FALSE)
+A la taula següent, es mostren les principals estadístiques descriptives per a les variables dimensionals dels amfiteatres.
 
-df_vazquez <- load_dimensions_vazquez(
-  filtrar_edifici = 'amphitheater',
-  filtrar_pais = NULL,
-  filtrar_provincia = c('hispania', 'panonnia', 'britannia'),
-  seleccionar_columnes = NULL,
-  retornar_originals = FALSE)
+```{r tab-descriptius}
+#| label: tbl-descriptius
+#| tbl-cap: "Estadístiques descriptives de les dimensions dels amfiteatres."
 
-# 3. Generem les llistes de taules de resum
-tab_01 <- tab_summary(
-  df = df_golvin,
-  grup_by = 'nom',
-  stats_adicionals = FALSE,
-  seleccio_variables = starts_with(c('amplada', 'alcada')),
-  na.rm = TRUE,
-  bind_rows = FALSE,
-  digits = 1)
+# Aquí cridaries la teva funció tab_summary.
+# Assegura't que l'objecte 'df_amfiteatres' contingui les teves dades.
+# Per exemple:
+# tab_summary(
+#   df = df_amfiteatres,
+#   seleccio_variables = starts_with('amplada') | starts_with('alcada'),
+#   stats_adicionals = TRUE,
+#   digits = 2
+# )
+```
 
-tab_02 <- tab_summary(
-  df = df_vazquez,
-  grup_by = 'nom',
-  stats_adicionals = FALSE,
-  seleccio_variables = starts_with(c('amplada', 'alcada')),
-  na.rm = TRUE,
-  bind_rows = FALSE,
-  digits = 1)
+Aquesta taula inclou el nombre d'observacions, la mitjana, la desviació estàndard, els quartils i altres mètriques que ens informen sobre la distribució i la dispersió de cada variable.
+
+### Visualització de les Dades
+
+Per complementar la taula descriptiva, els següents gràfics mostren la distribució de les principals variables dimensionals.
+
+```{r fig-distribucions}
+#| label: fig-distribucions
+#| fig-cap: "Distribucions de les dimensions principals."
+#| layout-ncol: 2
+
+# Aquí generaries els gràfics (p. ex., histogrames o boxplots amb ggplot2)
+# library(ggplot2)
+# 
+# ggplot(df_amfiteatres, aes(x = amplada_general)) +
+#   geom_histogram(bins = 15) +
+#   labs(title = "Distribució de l'Amplada General")
+# 
+# ggplot(df_amfiteatres, aes(x = amplada_arena)) +
+#   geom_histogram(bins = 15) +
+#   labs(title = "Distribució de l'Amplada de l'Arena")
+#
+# ggplot(df_amfiteatres, aes(y = amplada_general, x = provincia_romana)) +
+#   geom_boxplot() +
+#   labs(title = "Amplada General per Província") +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
+### Taules de Contingència
 
-## Resultats de Golvin (1988)
+Per explorar la relació entre variables categòriques, com la província romana i el país, hem creat les següents taules de contingència.
 
-A continuació es mostren les estadístiques descriptives de les dimensions dels amfiteatres segons les dades de Golvin, agrupades per província romana. Cada pestanya correspon a una variable diferent.
+```{r tab-contingencia}
+#| label: tbl-contingencia
+#| tbl-cap: "Taula de contingència entre Província Romana i País."
 
-```{r golvin-tables, panel = 'tabset'}
+# Aquí cridaries la teva funció amphi_crosstab.
+# amphi_crosstab(
+#   phen = df_amfiteatres,
+#   vars_x = "provincia_romana",
+#   vars_y = "pais"
+# )
+```
+
+## Imputació de Dades Absents
+
+Durant l'anàlisi exploratòria, es van identificar valors absents en variables clau. Per abordar aquest problema, es va aplicar un mètode d'imputació.
+
+En aquesta secció, es detalla el mètode d'imputació seleccionat i es mostra l'efecte de la imputació sobre la distribució de les dades.
+
+```{r imputacio}
+#| label: fig-imputacio
+#| fig-cap: "Comparació de les distribucions abans i després de la imputació."
+
+# Aquí executaries la imputació i guardaries els resultats.
+# df_imputat <- imputacio_val_perduts(
+#   df = df_amfiteatres,
+#   seleccio_variables = c(amplada_general, amplada_arena, alcada_general, alcada_arena),
+#   metode_imputacio = 'missForest', # O el mètode que prefereixis
+#   retornar_originals = FALSE
+# )
+
+# Després, podries visualitzar les diferències, per exemple amb gràfics de densitat.
+# library(ggplot2)
+# library(tidyr)
+# 
+# # Creant un dataframe per a la comparació
+# df_comparacio <- rbind(
+#   data.frame(df_amfiteatres[c("amplada_general")], tipus = "Original"),
+#   data.frame(amplada_general = df_imputat$amplada_general, tipus = "Imputat")
+# )
+# 
+# ggplot(df_comparacio, aes(x = amplada_general, fill = tipus)) +
+#   geom_density(alpha = 0.5) +
+#   labs(title = "Distribució de l'Amplada General Abans i Després de la Imputació")
 
 ```
 
+## Anàlisi Inferencial
 
-## Resultats de Vázquez (2023)
+Un cop les dades han estat preparades i imputades, procedim a realitzar anàlisis inferencials per comparar les dimensions dels amfiteatres entre diferents grups.
 
-```{r vazquez-tables, panel="tabset"}
+### Comparacions Bivariades
 
+Aquí s'examinen les diferències entre dos grups utilitzant proves com el T-test o el test de Wilcoxon, segons la distribució de les dades.
 
+```{r test-bivariat}
+#| label: tbl-test-bivariat
+#| tbl-cap: "Resultats del test de Wilcoxon per a l'amplada de l'arena entre dues províncies."
+
+# Aquí cridaries la teva funció amphi_stat_test.
+# Per exemple, per comparar 'hispania_baetica' vs 'hispania_tarraconensis'
+# df_dos_provincies <- df_imputat %>% 
+#   filter(provincia_romana %in% c("hispania_baetica", "hispania_tarraconensis"))
+# 
+# amphi_stat_test(
+#   df = df_dos_provincies,
+#   vars_x = "provincia_romana",
+#   vars_y = "amplada_arena",
+#   stat_tests = "wilcox_test"
+# )
 ```
+
+### Comparacions Múltiples
+
+Per analitzar les diferències entre més de dos grups (per exemple, entre totes les províncies romanes), s'utilitzen proves com Kruskal-Wallis seguida d'una prova post-hoc com el test de Dunn.
+
+```{r test-multivariat}
+#| label: tbl-test-multivariat
+#| tbl-cap: "Resultats del test de Kruskal-Wallis per a l'amplada general entre províncies."
+
+# Aquí cridaries la teva funció amphi_stat_multitest.
+# amphi_stat_multitest(
+#   df = df_imputat,
+#   vars_x = "provincia_romana",
+#   vars_y = "amplada_general",
+#   stat_tests = "kruskal_wallis"
+# )
+```
+
+```{r test-dunn}
+#| label: tbl-test-dunn
+#| tbl-cap: "Resultats del test de Dunn per a comparacions per parelles."
+
+# I la prova post-hoc
+# amphi_stat_multitest(
+#   df = df_imputat,
+#   vars_x = "provincia_romana",
+#   vars_y = "amplada_general",
+#   stat_tests = "dunn",
+#   adjust_method = "bonferroni" # Ajust de p-valor
+# )
+```
+
+Aquests resultats ens permeten identificar quins grups d'amfiteatres presenten diferències estadísticament significatives en les seves dimensions.

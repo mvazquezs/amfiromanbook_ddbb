@@ -1,8 +1,9 @@
 project:
   type: book
+  output-dir: _book
 
 book:
-  title: 'Amfiteatres romans'
+  title: "Anàlisi Quantitativa d'Amfiteatres Romans"
   author:
     - name: 'Miquel Vàzquez-Santiago'
       orcid: '0000-0002-9432-4297'
@@ -17,20 +18,24 @@ book:
     - 03_material_methods.qmd
     - 04_resultats.qmd
     - 05_conclusions.qmd
-    - references.bib  
+    - 06_references.qmd
+  appendices:
+    - statistical_analysis_plan.qmd
 
 
 bibliography: references.bib
 
 format:
   html:
-    theme:
-      light: united
-    css: styles-tango.css
+    theme: united
+    highlight-style: tango
+    css: styles.css
     code-fold: true
     code-summary: 'Hidden code'
   
-  # pdf:
-  #   documentclass: scrreprt
+  pdf:
+    documentclass: scrreprt
+    mainfont: "LMRoman10-Regular"
+    fontsize: 12pt
 
 editor: visual

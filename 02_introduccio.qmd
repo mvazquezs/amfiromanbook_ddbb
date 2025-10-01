@@ -1,10 +1,19 @@
-# Introduction
+# Introducció
 
-This is a book created from markdown and executable code.
+Els amfiteatres romans, escenaris de jocs gladiadors, caceres d'animals (`venationes`) i espectacles públics, constitueixen una de les expressions arquitectòniques més emblemàtiques i perdurables de l'Imperi Romà. La seva distribució geogràfica, des de les províncies occidentals fins a l'Orient, i la seva variabilitat dimensional reflecteixen la complexitat de l'enginyeria romana i la seva adaptació a contextos locals.
 
-See @knuth84 and @golvin1988amphitheatre for additional discussion of literate programming.
+Tot i que nombrosos amfiteatres han estat objecte d'estudis monogràfics, encara existeix una manca d'anàlisis quantitatives a gran escala que comparin sistemàticament les seves característiques dimensionals. Aquest treball busca omplir aquest buit mitjançant la creació i l'anàlisi d'una base de dades que aglutina informació de fonts diverses, principalment els treballs de @golvin1988amphitheatre i altres de més recents.
 
-```{r}
+## Objectius i Preguntes de Recerca
 
+Aquest estudi té com a objectiu principal analitzar i comparar les dimensions dels amfiteatres romans per entendre millor els patrons constructius i les possibles relacions entre la seva mida i la seva ubicació geogràfica.
 
-```
+Les preguntes de recerca que guien aquest treball són:
+
+1.  **Caracterització dimensional:** Quines són les dimensions típiques (i la seva variabilitat) dels amfiteatres romans pel que fa a l'arena, la càvea i les mides generals?
+2.  **Diferències provincials:** Existeixen diferències estadísticament significatives en les dimensions dels amfiteatres segons la província romana on es van construir?
+3.  **Identificació de tipologies:** Podem identificar grups o tipologies d'amfiteatres basant-nos en les proporcions entre les seves dimensions (p. ex., la ràtio entre l'arena i l'edifici)?
+
+## Estructura del Treball
+
+Per respondre a aquestes preguntes, aquest treball s'estructura en els següents capítols. El capítol de **Material i Mètodes** descriu les fonts de dades i la metodologia estadística emprada. El capítol de **Resultats** presenta les anàlisis descriptives i inferencials dutes a terme. Finalment, el capítol de **Conclusions** discuteix la interpretació dels resultats en el seu context històric i arquitectònic, i apunta a futures línies d'investigació.

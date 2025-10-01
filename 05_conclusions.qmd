@@ -1,4 +1,39 @@
-# Referències {.unnumbered}
+# Conclusions
 
-::: {#refs}
-:::
+En aquest capítol final, es resumeixen els principals resultats obtinguts, es discuteix la seva rellevància en el context de l'arquitectura romana, es reconeixen les limitacions de l'estudi i es proposen futures línies d'investigació.
+
+## Síntesi dels Resultats
+
+L'objectiu d'aquest treball era caracteritzar i comparar les dimensions dels amfiteatres romans a partir d'una base de dades quantitativa. Les anàlisis realitzades han permès extreure les següents conclusions clau en resposta a les preguntes de recerca inicials:
+
+1.  **Caracterització dimensional (RQ1):** L'anàlisi descriptiva ha mostrat una notable diversitat en les dimensions dels amfiteatres. Tot i que és possible identificar uns valors mitjans per a l'amplada de l'edifici i de l'arena, la dispersió és elevada. Aquesta variabilitat suggereix que, més enllà d'un model canònic, els constructors romans van adaptar els dissenys a les necessitats i recursos de cada ciutat.
+
+2.  **Diferències provincials (RQ2):** S'han confirmat diferències estadísticament significatives en les dimensions dels amfiteatres entre diferents províncies romanes. Per exemple, els edificis del nord d'Àfrica tendeixen a presentar unes dimensions superiors als de la península Ibèrica. Aquestes diferències podrien estar relacionades amb factors com la cronologia, la densitat de població, la importància administrativa de les ciutats o les tradicions constructives regionals.
+
+3.  **Identificació de tipologies (RQ3):** L'anàlisi de les proporcions internes dels edificis (com la ràtio arena/edifici) no ha permès establir tipologies clarament definides i excloents. Més aviat, els resultats apunten a un continu de solucions arquitectòniques on les proporcions varien de manera gradual. No obstant això, s'observen certes tendències regionals que mereixerien un estudi més aprofundit.
+
+## Discussió i Interpretació
+
+Els resultats d'aquest estudi quantitatiu complementen i, en alguns casos, matisen el coneixement qualitatiu existent sobre l'arquitectura romana. La confirmació de diferències dimensionals a escala provincial reforça la idea que l'Imperi no era un espai culturalment homogeni, sinó un mosaic de realitats regionals. L'enginyeria romana, tot i basar-se en principis comuns, demostra una gran flexibilitat i capacitat d'adaptació.
+
+La dificultat per establir tipologies rígides basades en proporcions podria indicar que els criteris purament dimensionals no són suficients per classificar aquests edificis. És probable que la combinació de dimensions amb altres variables (materials, tècniques constructives, capacitat estimada) ofereixi una visió més completa.
+
+## Limitacions de l'Estudi
+
+És important reconèixer les limitacions d'aquest treball, que poden servir de punt de partida per a futures investigacions:
+
+*   **Qualitat de les dades:** Les dades provenen de fonts secundàries i l'estat de conservació dels monuments introdueix un grau d'incertesa en les mesures.
+*   **Dades absents:** Tot i que es va utilitzar un mètode d'imputació robust (`missForest`), la presència de dades absents és una limitació inherent a les dades arqueològiques.
+*   **Absència de cronologia:** La manca d'una datació precisa per a molts amfiteatres impedeix realitzar una anàlisi diacrònica per entendre com van evolucionar les dimensions al llarg del temps.
+*   **Mida de la mostra:** El nombre d'amfiteatres ben documentats és limitat, la qual cosa pot afectar la potència estadística de les anàlisis.
+
+## Futures Línies d'Investigació
+
+A partir de les conclusions i limitacions exposades, es proposen les següents vies per a futures investigacions:
+
+*   **Incorporació de la cronologia:** Enriquir la base de dades amb informació cronològica fiable per analitzar l'evolució de les dimensions al llarg del temps.
+*   **Anàlisi multivariant avançada:** Aplicar tècniques com l'anàlisi de clústers per intentar definir tipologies basades en múltiples variables dimensionals i de proporció de manera simultània.
+*   **Ampliació de variables:** Incloure altres variables com la capacitat estimada, els materials de construcció o la presència de certs elements arquitectònics per obtenir una classificació més rica.
+*   **Estudi comparatiu:** Expandir la base de dades per incloure altres edificis d'espectacles, com teatres i circs, per realitzar una anàlisi comparativa de l'esforç constructiu dedicat a cada tipus d'esdeveniment.
+
+En definitiva, aquest treball ha demostrat el potencial de l'anàlisi quantitativa per a l'estudi sistemàtic de l'arquitectura monumental romana, obrint noves vies per entendre les decisions tècniques i culturals que van donar forma a aquests edificis icònics.

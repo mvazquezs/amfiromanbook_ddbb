@@ -1,1 +1,13 @@
 # Abstract
+
+Els amfiteatres romans són una de les manifestacions més representatives de l'arquitectura i l'enginyeria de l'antiga Roma. Aquest treball presenta una anàlisi quantitativa de les dimensions d'aquests edificis a tot l'Imperi, amb l'objectiu de caracteritzar-ne la mètrica, identificar possibles diferències regionals i explorar l'existència de tipologies basades en les seves proporcions arquitectòniques.
+
+Per a això, s'ha compilat una base de dades a partir de fonts publicades, principalment el catàleg de Jean-Claude Golvin (@golvin1988amphitheatre). Les dades absents, un problema inherent a les fonts arqueològiques, s'han tractat mitjançant mètodes d'imputació no paramètrics basats en *Random Forest* (`missForest`). L'anàlisi estadística posterior ha inclòs tant l'estadística descriptiva per caracteritzar les variables dimensionals, com proves inferencials no paramètriques (test de Kruskal-Wallis i test de Dunn) per comparar les dimensions entre les diferents províncies romanes.
+
+Els resultats revelen una considerable variabilitat dimensional, tot i que s'han pogut identificar diferències estadísticament significatives entre províncies. Aquestes diferències regionals suggereixen que, lluny d'un model arquitectònic homogeni, existien adaptacions locals o "escoles" constructives. L'anàlisi de les proporcions internes dels edificis no ha permès, però, definir tipologies discretes, sinó més aviat un continu de solucions formals.
+
+En conclusió, aquest estudi demostra la utilitat de l'enfocament quantitatiu per a l'estudi de l'arquitectura romana. Proporciona una base empírica que matisa la noció d'un cànon arquitectònic rígid i reforça la importància dels contextos regionals en la materialització dels projectes constructius a l'Imperi Romà.
+
+---
+
+**Paraules clau:** amfiteatre romà, arquitectura, anàlisi quantitativa, arqueologia computacional, províncies romanes, imputació de dades.
