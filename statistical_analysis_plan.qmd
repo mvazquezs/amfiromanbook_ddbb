@@ -1,112 +1,164 @@
 ---
 title: "Pla d'Anàlisi Estadística (SAP)"
-subtitle: "Projecte Amfiteatres Romans (amfiroman_ddbb)"
+subtitle: "Anàlisi Comparativa de les Dimensions dels Amfiteatres Romans"
+author:
+  - name: "Miquel Vàzquez-Santiago"
+    orcid: "0000-0002-9432-4297"
+    email: "vazquez.miquel@gmail.com"
+    github: "mvazquezs"
+date: "2025-10-01"
 format:
   html:
     toc: true
+    toc-depth: 3
     theme: united
-  pdf:
-    include-in-header: sap-style.tex
+    number-sections: false
+    math-method: mathjax
 ---
 
-## 1. Introducció
-# Pla d'Anàlisi Estadística
+# 1. Introducció al Projecte
 
-Aquest document detalla el pla d'anàlisi estadística per al projecte `amfiroman_ddbb`. L'objectiu principal del projecte és analitzar les dimensions dels amfiteatres romans per identificar patrons, relacions i diferències significatives entre diferents grups geogràfics o tipològics.
-Aquest document detalla el pla d'anàlisi estadística (SAP) que es seguirà en aquest estudi.
+Aquest document constitueix el Pla d'Anàlisi Estadística (SAP) per al projecte `amfiroman_ddbb`. L'objectiu principal és realitzar una anàlisi quantitativa i comparativa de les dimensions dels amfiteatres del món romà per identificar patrons arquitectònics, relacions dimensionals i possibles tipologies.
 
-Aquest pla es redacta abans de l'execució de l'anàlisi final per garantir la transparència i la reproductibilitat de la investigació.
-## 1. Hipòtesis de Recerca
+## 1.1. Objectius Específics
 
-### 1.1. Preguntes de Recerca
-Les hipòtesis principals són...
+L'anàlisi se centrarà en els següents objectius clau:
 
-Les preguntes de recerca que guien aquest treball són:
-## 2. Metodologia Estadística
+1.  **Avaluació de Fonts de Dades:** Comparar la consistència i fiabilitat de dues bases de dades fonamentals:
+    *   La base de dades de **Jean-Claude Golvin**, considerada una referència amb dades úniques per amfiteatre.
+    *   La base de dades de **Miguel Vázquez**, que agrega dades de múltiples fonts, presentant reptes com valors duplicats, discrepàncies i dades absents.
 
-1.  **Caracterització dimensional:** Quines són les dimensions típiques (i la seva variabilitat) dels amfiteatres romans pel que fa a l'arena, la càvea i les mides generals?
-2.  **Diferències provincials:** Existeixen diferències estadísticament significatives en les dimensions dels amfiteatres segons la província romana on es van construir?
-3.  **Identificació de tipologies:** Podem identificar grups o tipologies d'amfiteatres basant-nos en les proporcions entre les seves dimensions (p. ex., la ràtio entre l'arena i l'edifici)?
-Les proves estadístiques que s'aplicaran seran...
+2.  **Gestió de Dades Absents:** Implementar i avaluar mètodes d'imputació avançats (`missForest`, `MICE`) per tractar els valors perduts (`NA`) a la base de dades de Vázquez, amb l'objectiu de crear un conjunt de dades complet i robust per a l'anàlisi multivariant.
 
-## 2. Dades
+3.  **Anàlisi de Tipologies Arquitectòniques:** Investigar l'existència de clústers o tipologies d'amfiteatres mitjançant un **Anàlisi de Clustering Jeràrquic Aglomeratiu**, basat en les seves dimensions principals i ràtios derivades.
 
-### 2.1. Fonts de Dades
+4.  **Avaluació de Mètodes de Càlcul:** Analitzar i comparar diferents mètodes per calcular l'àrea i el perímetre de les el·lipses (arena i edifici), avaluant la precisió de les fórmules d'aproximació enfront de fórmules de referència com la de Ramanujan.
 
-Les dades provenen de la compilació de diverses fonts acadèmiques, principalment de les bases de dades de J.C. Golvin i M. Vàzquez.
+# 2. Dades
 
-### 2.2. Variables d'Estudi
+## 2.1. Fonts de Dades
 
-Les variables clau per a l'anàlisi són:
+L'estudi es basa en la integració i comparació de dues fonts de dades:
 
-*   **Variables Primàries (Numèriques):**
-    *   `amplada_general`: Amplada total de l'amfiteatre.
-    *   `alcada_general`: Alçada total de l'amfiteatre.
-    *   `amplada_arena`: Amplada de l'arena.
-    *   `alcada_arena`: Alçada de l'arena.
-    *   `amplada_cavea`: Amplada de la càvea.
+*   **Font G (Golvin):** Base de dades de referència, caracteritzada per proporcionar una única mesura per a cada dimensió de cada amfiteatre.
+*   **Font V-S (Vázquez-Santiago):** Base de dades de compilació que inclou múltiples entrades per a un mateix amfiteatre, reflectint la variabilitat entre diferents fonts secundàries. Aquesta font conté un volum significatiu de dades absents.
 
-*   **Variables Derivades (Ràtios):** Es crearan noves variables per analitzar proporcions, com `ratio_arena_edifici = amplada_arena / amplada_general`.
+## 2.2. Resum de Variables d'Estudi
 
-*   **Variables Agrupadores (Categòriques):**
-    *   `nom`: Nom de l'amfiteatre.
-    *   `provincia_romana`: Província romana on es troba l'amfiteatre.
-    *   `pais`: País actual.
+| Categoria | Variable | Fonts | Descripció |
+|---|---|---|---|
+| Identificador | `index_id`, `nom` | G, V-S | Identificador numèric únic i nom. |
+| Dimensió Física | `amplada_arena`, `alcada_arena` | G, V-S | Ample i llarg de l'arena (metres). |
+| Dimensió Física | `amplada_general`, `alcada_general` | G, V-S | Ample i llarg total de l'edifici (metres). |
+| Dimensió Física | `nombre_places` | G, V-S | Capacitat estimada de l'amfiteatre. |
+| Contextual | `provincia_romana`, `pais` | G, V-S | Context geogràfic i polític. |
+| Derivada | `ratio_arena`, `superficie_general` | G, V-S | Càlculs de ràtio i superfície (m²). |
 
-## 3. Preparació de les Dades
+**Nota Clau:** Es re-calcularan les variables derivades com la superfície i el perímetre per garantir la consistència metodològica entre les fonts.
 
-### 3.1. Gestió de Dades Absents
+## 2.3. Diccionari de Variables
 
-La presència de valors absents (`NA`) serà avaluada per a cada variable. S'utilitzaran mètodes d'imputació per completar el conjunt de dades i permetre l'ús de tècniques d'anàlisi multivariant.
+La taula següent detalla les variables que s'utilitzaran en l'anàlisi.
 
-*   **Mètode d'Imputació:** S'exploraran mètodes avançats com `missForest` (basat en Random Forest), `MICE` (Imputació Múltiple per Equacions Encadenades) o `kNN` (K-Veïns Més Propers), disponibles a la funció `imputacio_val_perduts`.
-*   **Mètode de Reserva:** En cas que els mètodes avançats fallin o no siguin apropiats, s'utilitzarà un mètode de reserva més simple, com la imputació per la `mediana` o la `mitjana`, possiblement agrupant per una variable rellevant (`grup_by`).
-*   **Avaluació:** Es compararà la distribució de les variables abans i després de la imputació per avaluar-ne l'impacte.
+| Variable | Tipus | Font(s) | Descripció | Notes |
+|---|---|---|---|---|
+| **Identificadors** | ||||
+| `index_id` | Categòrica | G, V-S | Identificador numèric únic de l'amfiteatre. | Clau primària. |
+| `nom` | Categòrica | G, V-S | Nom de la localitat o amfiteatre. | |
+| **Dimensions Físiques** | ||||
+| `amplada_general` | Numèrica | G, V-S | Ample total de l'edifici (eix menor) en metres. | Semieix *b*. |
+| `alcada_general` | Numèrica | G, V-S | Llarg total de l'edifici (eix major) en metres. | Semieix *a*. |
+| `amplada_arena` | Numèrica | G, V-S | Ample de l'arena interior (eix menor) en metres. | |
+| `alcada_arena` | Numèrica | G, V-S | Llarg de l'arena interior (eix major) en metres. | |
+| `nombre_places` | Numèrica | G, V-S | Estimació de la capacitat de l'amfiteatre. | Utilitzada com a variable exploratòria. |
+| **Variables de Context** | ||||
+| `provincia_romana` | Categòrica | V-S | Província romana històrica on es troba el jaciment. | Variable contextual. |
+| `pais` | Categòrica | G, V-S | País actual on es troba el jaciment. | Variable contextual. |
+| `elevation_m` | Numèrica | V-S | Elevació del jaciment sobre el nivell del mar (metres). | Utilitzada com a variable exploratòria. |
+| **Variables Derivades** | ||||
+| `ratio_general` | Numèrica | Derivada | Ràtio de l'el·lipse general (`alcada_general` / `amplada_general`). | Variable per a l'anàlisi de clústers. |
+| `ratio_arena` | Numèrica | Derivada | Ràtio de l'el·lipse de l'arena (`alcada_arena` / `amplada_arena`). | Variable per a l'anàlisi de clústers. |
+| `superficie_general`| Numèrica | Derivada | Àrea total de l'el·lipse general (m²). | Recalculada segons la Secció 4.4. |
+| `perimetre_R` | Numèrica | Derivada | Perímetre de l'el·lipse (aproximació de Ramanujan, $P_R$). | Recalculada segons la Secció 4.4. |
+| `perimetre_S` | Numèrica | Derivada | Perímetre de l'el·lipse (aproximació simple, $P_1$). | Recalculada segons la Secció 4.4. |
+| **Variables de l'Anàlisi** | ||||
+| `font` | Categòrica | Derivada | Identificador de la font: 'Golvin', 'V-S Original', 'V-S Imputada'. | Clau per a les comparacions. |
 
-## 4. Mètodes Estadístics
+# 3. Preparació de les Dades
 
-### 4.1. Anàlisi Descriptiva
+## 3.1. Gestió de Dades Absents (NA)
 
-Aquesta secció abordarà la **pregunta de recerca 1 (Caracterització dimensional)**.
+La imputació de dades es realitzarà exclusivament sobre la base de dades de Vázquez-Santiago.
 
-L'anàlisi descriptiva es realitzarà per resumir les característiques principals del conjunt de dades.
+*   **Mètodes d'Imputació Avançats:** S'utilitzaran `missForest` (basat en Random Forest) i `MICE` (Imputació Múltiple per Equacions Encadenades) per generar un conjunt de dades imputat.
+*   **Avaluació de la Imputació:** Es compararà la distribució de les variables abans i després de la imputació mitjançant gràfics de densitat i proves estadístiques per avaluar l'impacte de la imputació.
 
-*   **Variables Numèriques:** Es calcularan estadístics de resum utilitzant la funció `tab_summary`. Aquests inclouran: recompte (n), valors absents (na), mitjana, mediana, desviació estàndard (sd), rang interquartílic (IQR), mínim, màxim, asimetria (skewness) i curtosi (kurtosis).
-*   **Variables Categòriques:** Es presentaran en taules de freqüència (recomptes i percentatges). S'utilitzarà la funció `amphi_crosstab` per crear taules de contingència i explorar l'associació entre elles.
-*   **Visualització:** Es generaran histogrames i gràfics de densitat per visualitzar la distribució de les variables numèriques, i diagrames de caixes (`boxplots`) per comparar les distribucions entre grups.
+# 4. Mètodes Estadístics (SAP)
 
-### 4.2. Anàlisi Inferencial per a Diferències Provincials
+## 4.1. Anàlisi Descriptiva
 
-Aquesta secció abordarà principalment la **pregunta de recerca 2 (Diferències provincials)**.
+Es realitzarà una anàlisi descriptiva exhaustiva per a cada font de dades (`Golvin`, `V-S Original`, `V-S Imputada`).
 
-L'anàlisi inferencial es durà a terme per identificar diferències estadísticament significatives en les dimensions dels amfiteatres entre els grups definits per les variables categòriques.
+*   **Estadístics de Resum:** Es calcularan la mitjana, mediana, desviació estàndard (DS), rang interquartílic (IQR) i nombre d'observacions (N) per a totes les variables numèriques.
+*   **Visualització:** S'utilitzaran histogrames, diagrames de densitat i diagrames de caixes (`boxplots`) per visualitzar i comparar les distribucions.
 
-*   **Normalitat:** Es comprovarà la normalitat de les distribucions (p. ex., amb el test de Shapiro-Wilk, disponible a `tab_summary`) per decidir entre proves paramètriques i no paramètriques.
+## 4.2. Comparació de Fonts i Mètodes d'Imputació
 
-*   **Comparació de Dos Grups:**
-    *   **Prova:** S'utilitzarà el T-test de Student (dades normals) o el test de Wilcoxon (dades no normals).
-    *   **Funció:** `amphi_stat_test`.
+Es realitzarà una anàlisi inferencial per comparar les distribucions de les variables clau entre les tres fonts.
 
-*   **Comparació de Més de Dos Grups:**
-    *   **Prova:** S'utilitzarà ANOVA (o Welch ANOVA) per a dades normals, o el test de Kruskal-Wallis per a dades no paramètriques.
-    *   **Funció:** `amphi_stat_multitest`.
+*   **Tests Estadístics Globals:**
+    *   **ANOVA d'una via:** Si les dades segueixen una distribució normal i hi ha homocedasticitat.
+    *   **Test de Kruskal-Wallis:** Alternativa no paramètrica si no es compleixen els supòsits d'ANOVA.
+*   **Comparacions Múltiples Post-Hoc:**
+    *   `rstatix::pairwise_t_test` o `rstatix::wilcox_test` amb ajust de p-valor de **Benjamini-Hochberg (BH)** per controlar la taxa de falsos descobriments.
 
-*   **Proves Post-Hoc:**
-    *   **Proves:** Test de Games-Howell (per a Welch ANOVA) o test de Dunn (per a Kruskal-Wallis).
-    *   **Funció:** `amphi_stat_multitest`.
+## 4.3. Anàlisi de Clústers
 
-*   **Ajust de p-values:** S'ajustaran amb mètodes com Bonferroni, Holm o FDR (`BH`) mitjançant la funció `amphi_adjust_pvalue`.
+S'aplicarà un **Anàlisi de Clustering Jeràrquic Aglomeratiu** per identificar tipologies d'amfiteatres.
 
-### 4.3. Anàlisi de Tipologies
+*   **Variables i Mètriques:**
+    *   L'anàlisi es basarà en les dades de Vázquez-Santiago imputades i normalitzades (estandaritzades).
+    *   **Variables Principals:** `amplada_general`, `alcada_general`, `amplada_arena`, `alcada_arena`.
+    *   **Variables Exploratòries:** `ratio_general`, `ratio_arena`, `elevation_m`.
+*   **Mètriques de Distància i Agrupament:**
+    *   **Distàncies:** S'avaluaran la **distància Euclidiana (L2)** i la **distància de Manhattan (L1)**.
+    *   **Mètode d'Agrupament:** S'utilitzarà el mètode de **Ward (Ward's minimum variance)** per minimitzar la variància intra-clúster.
 
-Aquesta secció abordarà la **pregunta de recerca 3 (Identificació de tipologies)**.
+## 4.4. Avaluació de Càlculs d'Àrea i Perímetre
 
-*   **Creació de Ràtios:** Es generaran noves variables calculant les ràtios entre dimensions clau (p. ex., `amplada_arena / amplada_general`).
-*   **Anàlisi de les Ràtios:** Aquestes noves variables seran analitzades seguint els mateixos passos descrits a les seccions 4.1 i 4.2: anàlisi descriptiva per entendre la seva distribució i anàlisi inferencial per comprovar si les proporcions difereixen entre províncies.
+Es recalcularan l'àrea i el perímetre per a totes les el·lipses i es compararà la precisió de dues fórmules per al perímetre.
 
-## 5. Programari
+*   **Àrea de l'El·lipse (A):**
+    $$ A = \pi \cdot a \cdot b $${#eq-area}
 
-Totes les anàlisis es realitzaran amb el llenguatge de programació **R** (versió 4.0 o superior) i l'entorn de desenvolupament **RStudio**. El report final serà generat amb **Quarto**.
-```{{=latex}}
-\restoredefaultstyles
-```
+*   **Perímetre (Aproximació Simple, $P_1$):**
+    $$ P_1 = \pi \cdot (a + b) $${#eq-perimetre-simple}
+
+*   **Perímetre (Aproximació de Ramanujan, $P_R$):**
+    $$ P_R = \pi [3(a+b) - \sqrt{(3a+b)(a+3b)}] $${#eq-perimetre-ramanujan}
+
+*   **Test Estadístic:** S'utilitzarà una **Prova de Wilcoxon per a Mostres Aparellades** per avaluar la diferència sistemàtica entre $P_1$ i $P_R$.
+
+# 5. Presentació de Resultats (Dashboard)
+
+## 5.1. Anàlisi Descriptiva
+
+*   **Taula 1:** Estadístics descriptius de les dimensions clau, agrupats per font.
+*   **Gràfics:** Histogrames i diagrames de caixes comparatius per font.
+
+## 5.2. Comparació de Fonts
+
+*   **Taules 2 i 3:** Resultats dels tests globals (ANOVA/Kruskal-Wallis) i de les comparacions post-hoc.
+*   **Gràfic:** Diagrames de violí per comparar la densitat de les variables entre fonts.
+
+## 5.3. Anàlisi de Clústers
+
+*   **Taula 4:** Característiques mitjanes de les variables per a cada clúster identificat.
+*   **Gràfics:**
+    *   Dendrograma de l'anàlisi jeràrquic.
+    *   Gràfic de dispersió (PCA Biplot) per visualitzar els clústers.
+
+## 5.4. Avaluació de Càlculs
+
+*   **Taula 5:** Resultats de la Prova de Wilcoxon comparant $P_R$ i $P_1$.
+*   **Gràfic:** Gràfic de Bland-Altman per visualitzar l'acord i el biaix entre els dos mètodes de càlcul del perímetre.
