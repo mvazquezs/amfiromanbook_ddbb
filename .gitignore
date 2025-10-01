@@ -45,3 +45,8 @@ Thumbs.db
 *.bak
 *.swp
 /.quarto/
+
+## Fitxers de PDF
+*.pdf
+*.log
+*.tex
