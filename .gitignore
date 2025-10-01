@@ -11,8 +11,6 @@
 .Rprofile
 .Rapp.history
 .Rcheckpoint/
-proves.R
-02_v_2025_08_16_func_accesories.R
 
 ## Fitxers de gestors de paquets
 renv/
