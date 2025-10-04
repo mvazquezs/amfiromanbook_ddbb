@@ -136,9 +136,8 @@ load_dimensions_vazquez <- function(
     'arena_m2', 'overall_m2', 'cavea_m2',
     'ratio_arena', 'ratio_general', 'ratio_cavea',
     'superficie_arena', 'superfie_general',
+    'nombre_places', 'elevation_m',
     'perimetre_arena', 'perimetre_general', 'valor')
-
-  cols_int <- c('nomre_places', 'elevation_m')
 
   cols_chr <- c(
     'place', 'phase', 'nom', 'hackett_class', 
@@ -159,8 +158,6 @@ load_dimensions_vazquez <- function(
         perimetre_arena = pi * (amplada_arena / 2 + alcada_arena / 2),
         perimetre_general = pi * (amplada_general / 2 + alcada_general / 2),
         ratio_cavea = superficie_arena / superficie_general) %>%
-      dplyr::mutate(
-        across(any_of(cols_num), as.integer)) %>%
       dplyr::mutate(
         across(any_of(cols_num), as.double)) %>%
       dplyr::mutate(
@@ -233,7 +230,10 @@ load_dimensions_vazquez <- function(
           values_to = 'valor',
           values_drop_na = FALSE))
     
-    } else {
+    } else if (isFALSE(format_llarg) & rlang::quo_is_null(seleccionar_columnes)) {
+
+      # Double check 02
+      stopifnot(all(sapply(l_data_vazquez, ncol) == 32))
 
       l_data_vazquez <- purrr::map(l_data_vazquez, ~ .x %>%
         tidyr::pivot_longer(
@@ -241,6 +241,13 @@ load_dimensions_vazquez <- function(
           names_to = 'variable',
           values_to = 'valor',
           values_drop_na = FALSE))
+
+      # Double check 03
+      stopifnot(all(sapply(l_data_vazquez, ncol) == 15))
+
+    } else {
+
+      l_data_vazquez
 
     }
 

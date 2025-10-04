@@ -1,8 +1,13 @@
 ### Ignora fitxers generats durant l'execució del codi
 ## Arxius generats y temporals
+## Fitxers de PDF
+*.pdf
 *.RData
 *.csv
 *.pdf
+*.tex
+*.log
+*.aux
 
 ## Fitxers de l'entorn de treball de R
 .Rproj.user/
@@ -45,8 +50,3 @@ Thumbs.db
 *.bak
 *.swp
 /.quarto/
-
-## Fitxers de PDF
-*.pdf
-*.log
-*.tex

@@ -590,7 +590,6 @@ load_dimensions_golvin <- function(
       'tableau 31 amphitheatres mal connus')
 
 ### Definir aquelles columnes númeriques
-### cols_int <- c('nomre_places', 'elevation_m')
   cols_num <- c(
     'amplada_arena', 'alcada_arena', 'amplada_general', 'alcada_general',
     'nombre_places', 'amplada_cavea',  
@@ -599,7 +598,8 @@ load_dimensions_golvin <- function(
     'arena_m2', 'overall_m2', 'cavea_m2',
     'ratio_arena', 'ratio_general', 'ratio_cavea',
     'superficie_arena', 'superfie_general',
-    'perimetre_arena', 'perimetre_general')
+    'nombre_places', 'elevation_m',
+    'perimetre_arena', 'perimetre_general', 'valor')
 
   cols_chr <- c(
     'place', 'phase', 'nom', 'hackett_class', 
@@ -656,6 +656,7 @@ load_dimensions_golvin <- function(
 
 ### Transforma format_ample en format_llarg
    if(isTRUE(format_llarg) & !rlang::quo_is_null(seleccionar_columnes)) {
+    
     # Pivota només les columnes de la selecció de l'usuari que siguin numèriques,
     # evitant errors en intentar combinar diferents tipus de dades.
     l_tableau <- purrr::map(l_tableau, ~ .x %>%
@@ -665,21 +666,51 @@ load_dimensions_golvin <- function(
           values_to = 'valor',
           values_drop_na = FALSE))
     
-    } else {
+    } else if (isTRUE(format_llarg) & rlang::quo_is_null(seleccionar_columnes)) {
+      
+    # Double check 02
+      stopifnot(all(sapply(l_tableau, ncol) == 19))
 
       l_tableau <- purrr::map(l_tableau, ~ .x %>%
         tidyr::pivot_longer(
-          cols = where(is.numeric) | where(is.integer),
+          cols = where(is.numeric),
           names_to = 'variable',
           values_to = 'valor',
           values_drop_na = FALSE))
 
+    # Double check 03
+      stopifnot(all(sapply(l_tableau, ncol) == 7))
+
+    } else {
+
+      l_tableau
+    
     }
 
 
 ### Fusió de les dues taules per la columna 'nom' i 'original_id'
   taula_fusionada <- dplyr::bind_rows(l_tableau) %>%
     dplyr::arrange('index_id', 'nom',  'provincia_romana', 'pais')
+
+### Guardar la taula fusionada com a arxiu CSV
+  # Esborrar arxius CSV existents amb el mateix patró
+  if(isFALSE(format_llarg) & rlang::quo_is_null(seleccionar_columnes) & is.null(filtrar_provincia) & is.null(filtrar_pais)) {
+   
+    arxiu_a_esborrar <- list.files(
+      path = file.path('data', '01_data_golvin'),
+      pattern = '^01_.*_dimensions_amphitheatres_golvin\\.csv$',
+      full.names = TRUE)
+
+    if (length(arxiu_a_esborrar) > 0) { file.remove(arxiu_a_esborrar) }
+
+    # Crear el nom de l'arxiu nou i guardar-lo
+    data_actual <- format(Sys.Date(), '%y.%m.%d')
+    nom_arxiu <- paste0('01_', data_actual, '_dimensions_amphitheatres_golvin.csv')
+    cami_arxiu <- file.path('data', '01_data_golvin', nom_arxiu)
+
+    utils::write.csv2(taula_fusionada, file = cami_arxiu, na = 'NA', row.names = FALSE)
+  
+  }
 
 
   if (isTRUE(retornar_originals)) {

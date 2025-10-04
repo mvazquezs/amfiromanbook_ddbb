@@ -27,7 +27,7 @@
 #' @import mice
 #' @import VIM
 #'
-#' @return Un `tibble` amb els valors imputats o una `llista` que conté el `tibble` original i l'imputat.
+#' @return Una llista que conté `df_imputat` (el dataframe imputat) i `report` (un resum de la imputació). Si `retornar_originals` és TRUE, la llista també conté `df_original`.
 #'
 #' @examples
 #'
@@ -58,67 +58,17 @@
 #' # ---
 #'
 #' # Exemple 1: Imputació amb la Mitjana Aritmètica
-#' df_mitjana <- imputacio_val_perduts(
+#' resultat_mitjana <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   metode_imputacio = 'mitjana_aritmetica')
 #'
 #' # Exemple 2: Imputació amb la Mediana, agrupant per 'nom'
-#' df_mediana_grup <- imputacio_val_perduts(
+#' resultat_mediana_grup <- imputacio_val_perduts(
 #'   df = df_prova,
 #'   seleccio_variables = c(amplada_general, amplada_arena),
 #'   grup_by = nom,
 #'   metode_imputacio = 'mediana')
-#'
-#' # Exemple 3: Imputació amb la Mitjana Geomètrica
-#' df_geometrica <- imputacio_val_perduts(
-#'   df = df_prova,
-#'   seleccio_variables = c(amplada_general, amplada_arena),
-#'   metode_imputacio = 'mitjana_geometrica')
-#'
-#' # Exemple 4: Imputació amb la Mitjana Truncada
-#' df_truncada <- imputacio_val_perduts(
-#'   df = df_prova,
-#'   seleccio_variables = c(amplada_general, amplada_arena),
-#'   metode_imputacio = 'mitjana_truncada',
-#'   valor_trim = 0.2)
-#'
-#' # Exemple 5: Imputació amb la Mitjana Winsoritzada
-#' df_winsoritzada <- imputacio_val_perduts(
-#'   df = df_prova,
-#'   seleccio_variables = c(amplada_general, amplada_arena),
-#'   metode_imputacio = 'mitjana_winsoritzada',
-#'   valor_trim = 0.05)
-#'
-#' # ---
-#' # Exemples de mètodes avançats
-#' # ---
-#'
-#' # Exemple 6: Imputació amb missForest
-#' # Nota: missForest funciona millor amb dades numèriques i categòriques ben definides.
-#' df_missForest <- imputacio_val_perduts(
-#'   df = df_prova,
-#'   grup_by = c('index_id', 'nom'),
-#'   seleccio_variables = c(starts_with('amplada'), starts_with('alcada')),
-#'   metode_imputacio = 'missForest',
-#'   metode_reserva = 'mitjana_winsoritzada',
-#'   valor_trim = 0.05)
-#'
-#' # Exemple 7: Imputació amb MICE
-#' df_mice <- imputacio_val_perduts(
-#'   df = df_prova,
-#'   seleccio_variables = c(amplada_general, amplada_arena, alcada_general),
-#'   metode_imputacio = 'MICE',
-#'   metode_reserva = 'mitjana_aritmetica'
-#' )
-#'
-#' # Exemple 8: Imputació amb kNN
-#' df_knn <- imputacio_val_perduts(
-#'   df = df_prova,
-#'   seleccio_variables = c(amplada_general, amplada_arena, alcada_general),
-#'   metode_imputacio = 'kNN',
-#'   metode_reserva = 'mediana'
-#' )
 #'
 #' @rdname imputacio_val_perduts
 #'
@@ -129,28 +79,36 @@ imputacio_val_perduts <- function(
   seleccio_variables = NULL,
   metode_imputacio = c(
     'mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana', 'missForest', 'MICE', 'kNN'),
-  metode_reserva = 'mediana',
+  metode_reserva = c(
+    'mediana', 'mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada'),
   valor_trim = .10,
   retornar_originals = FALSE) 
 {
-  ### Double check 01
+  ### Validació d'arguments
+  metode_imputacio <- match.arg(metode_imputacio)
+  
   if (!is.data.frame(df) && !tibble::is_tibble(df)) {
     stop("Argument 'df' ha de ser un data.frame o un tibble.")
   }
 
-  ### Double check 02
-  valid_methods <- c('mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana', 'missForest', 'MICE', 'kNN')
-  if (!metode_imputacio %in% valid_methods) {
-    stop(paste0("Mètode imputació no vàlid. Si us plau, escolliu un dels següents: ", paste(valid_methods, collapse = ', ')))
+  simple_methods <- c('mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana')
+  
+  # Validar o anul·lar metode_reserva
+  if (metode_imputacio %in% simple_methods) {
+    metode_reserva <- NULL
+  } else if (!is.null(metode_reserva)) {
+    metode_reserva <- match.arg(metode_reserva, choices = simple_methods)
   }
-  valid_fallback_methods <- c('mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana')
-  if (!metode_reserva %in% valid_fallback_methods) {
-    stop("El 'metode_reserva' només pot ser un dels mètodes estadístics: 'mitjana_aritmetica', 'mitjana_geometrica', 'mitjana_truncada', 'mitjana_winsoritzada', 'mediana'.")
-  }
+
+  ### Inicialitzar comptadors i guardar ordres
+  original_cols <- names(df)
+  df <- df %>% dplyr::mutate(.original_row_order = dplyr::row_number())
+  oob_error_values <- NULL 
+  fallback_count <- 0
 
   ### Carrega de paquets requerits
   f_requerides <- list(
-    amphi_tool.required_packages = 'R/00_v_2025_07_23_setup_dir.R')
+    amphi_load_packages = 'R/00_setup.R')
 
   for (i in names(f_requerides)) {
     if (!exists(i, mode = 'function')) {
@@ -162,13 +120,18 @@ imputacio_val_perduts <- function(
   }
 
   ### Carrega de paquets
-  amphi_tool.required_packages(
-    locale = 'es_ES.UTF-8',
+  amphi_load_packages(
     update_packages = FALSE)
 
   ### Captura les expressions de selecció de l'usuari amb enquo
   sel_exp_variables <- rlang::enquo(seleccio_variables)
   sel_vars_names <- names(dplyr::select(df, !!sel_exp_variables))
+
+  ### Recompte inicial de NAs
+  na_originals <- df %>% 
+    dplyr::select(all_of(sel_vars_names)) %>% 
+    is.na() %>% 
+    sum()
 
   ### Funció per imputar amb mètodes estadístics
   imputar_df_estatistic <- function(data, method) {
@@ -216,13 +179,22 @@ imputacio_val_perduts <- function(
     tryCatch({
       set.seed(42) # Per a reproductibilitat
       df_temp <- df_imp %>% dplyr::select(all_of(sel_vars_names)) %>% as.data.frame()
-      imputed_result <- missForest::missForest(df_temp, maxiter = 10, ntree = 100)
+      
+      imputed_result <- suppressWarnings({
+        missForest::missForest(
+          df_temp, 
+          maxiter = 100, 
+          ntree = 100)
+      })
+
       df_imp[sel_vars_names] <- imputed_result$ximp
-      warning(paste("Error OOB (NRMSE/PFC) per a missForest:", round(imputed_result$OOBerror['NRMSE'], 4), "/", round(imputed_result$OOBerror['PFC'], 4)))
+      oob_error_values <- imputed_result$OOBerror
 
     }, error = function(e) {
-      warning(paste("Imputació amb 'missForest' ha fallat:", e$message, "S'utilitzarà el mètode de reserva:", metode_reserva))
-      df_imp <- imputar_df_estatistic(df_imp, metode_reserva)
+    
+      fallback_count <<- fallback_count + 1
+      df_imp <<- imputar_df_estatistic(df_imp, metode_reserva)
+    
     })
 
   } else if (metode_imputacio == 'MICE') {
@@ -239,8 +211,9 @@ imputacio_val_perduts <- function(
       df_imp <- mice::complete(imputed_data)
 
     }, error = function(e) {
+      fallback_count <<- fallback_count + 1
       warning(paste("Imputació amb 'MICE' ha fallat:", e$message, "S'utilitzarà el mètode de reserva:", metode_reserva))
-      df_imp <- imputar_df_estatistic(df_imp, metode_reserva)
+      df_imp <<- imputar_df_estatistic(df_imp, metode_reserva)
     })
 
   } else if (metode_imputacio == 'kNN') {
@@ -256,8 +229,9 @@ imputacio_val_perduts <- function(
       df_imp <- VIM::kNN(df_imp, k = 5, imp_suffix = 'Imputed')
 
     }, error = function(e) {
+      fallback_count <<- fallback_count + 1
       warning(paste("Imputació amb 'kNN' ha fallat:", e$message, "S'utilitzarà el mètode de reserva:", metode_reserva))
-      df_imp <- imputar_df_estatistic(df_imp, metode_reserva)
+      df_imp <<- imputar_df_estatistic(df_imp, metode_reserva)
     })
 
   } else {
@@ -273,10 +247,45 @@ imputacio_val_perduts <- function(
     }
   }
 
-  ### Retorna el resultat segons 'retornar_originals
-  if (retornar_originals == FALSE) {
-    return(df_imp)
-  } else {
-    return(list(df_imputat = df_imp, df_original = df))
+  ### Recompte final de NAs
+  na_finals <- df_imp %>% 
+    dplyr::select(all_of(sel_vars_names)) %>% 
+    is.na() %>% 
+    sum()
+
+  ### Construcció del report
+  report_info <- list(
+    metode_imputacio = metode_imputacio,
+    variables_imputades = sel_vars_names,
+    na_originals = na_originals,
+    na_restants = na_finals,
+    vegades_usat_metode_reserva = fallback_count
+  )
+  
+  # Afegir l'error OOB al report si existe
+  if (!is.null(oob_error_values)) {
+    report_info$error_oob <- oob_error_values
   }
+
+  ### Restaura l'ordre original de columnes i files
+  df_imp <- df_imp %>%
+    dplyr::arrange(.original_row_order) %>%
+    dplyr::select(any_of(original_cols))
+
+  ### Construir la llista de resultats
+  resultat <- list(
+    df_imputat = df_imp
+  )
+
+  if (retornar_originals == TRUE) {
+    df_original_out <- df %>%
+      dplyr::arrange(.original_row_order) %>%
+      dplyr::select(any_of(original_cols))
+    resultat$df_original <- df_original_out
+  }
+
+  # Afegir el report al final
+  resultat$report <- report_info
+
+  return(resultat)
 }
