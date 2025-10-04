@@ -66,8 +66,8 @@ La taula següent detalla les variables que s'utilitzaran en l'anàlisi.
 | `index_id` | Categòrica | G, V-S | Identificador numèric únic de l'amfiteatre. | Clau primària. |
 | `nom` | Categòrica | G, V-S | Nom de la localitat o amfiteatre. | |
 | **Dimensions Físiques** | ||||
-| `amplada_general` | Numèrica | G, V-S | Ample total de l'edifici (eix menor) en metres. | Semieix *b*. |
-| `alcada_general` | Numèrica | G, V-S | Llarg total de l'edifici (eix major) en metres. | Semieix *a*. |
+| `amplada_general` | Numèrica | G, V-S | Ample total de l'edifici (eix menor) en metres. | eix *b*. |
+| `alcada_general` | Numèrica | G, V-S | Llarg total de l'edifici (eix major) en metres. | eix *a*. |
 | `amplada_arena` | Numèrica | G, V-S | Ample de l'arena interior (eix menor) en metres. | |
 | `alcada_arena` | Numèrica | G, V-S | Llarg de l'arena interior (eix major) en metres. | |
 | `nombre_places` | Numèrica | G, V-S | Estimació de la capacitat de l'amfiteatre. | Utilitzada com a variable exploratòria. |
@@ -126,18 +126,29 @@ S'aplicarà un **Anàlisi de Clustering Jeràrquic Aglomeratiu** per identificar
 
 ## 4.4. Avaluació de Càlculs d'Àrea i Perímetre
 
-Es recalcularan l'àrea i el perímetre per a totes les el·lipses i es compararà la precisió de dues fórmules per al perímetre.
+Es recalcularan l'àrea i el perímetre per a totes les el·lipses i es compararà la precisió de dues fórmules per al perímetre. Les aproximacions usades han estat:
 
 *   **Àrea de l'El·lipse (A):**
-    $$ A = \pi \cdot a \cdot b $${#eq-area}
+    $$ A = \pi \cdot \frac{a}{2} \cdot \frac{b}{2} $${#eq-area}
 
 *   **Perímetre (Aproximació Simple, $P_1$):**
-    $$ P_1 = \pi \cdot (a + b) $${#eq-perimetre-simple}
+    $$ P_1 = \pi \left( \frac{a}{2} + \frac{b}{2} \right) $${#eq-perimetre-simple}
 
-*   **Perímetre (Aproximació de Ramanujan, $P_R$):**
-    $$ P_R = \pi [3(a+b) - \sqrt{(3a+b)(a+3b)}] $${#eq-perimetre-ramanujan}
+Les aproximacions alternatives per al seu calcul serien les següents:
 
-*   **Test Estadístic:** S'utilitzarà una **Prova de Wilcoxon per a Mostres Aparellades** per avaluar la diferència sistemàtica entre $P_1$ i $P_R$.
+*   **Perímetre (Aproximació quadràtica, $P_Q$):**
+    $$ P_Q = 2 \cdot \pi \sqrt{\frac{a^2 + b^2}{2}} $${#eq-perimetre-quadratica}
+
+*   **Perímetre (Aproximació de Ramanujan I, $P_{RI}$):**
+    $$ P_{RI} = \pi [3(a+b) - \sqrt{(3a+b)(a+3b)}] $${#eq-perimetre-ramanujan_i}
+
+*   **Perímetre (Aproximació de Ramanujan II, $P_{RII}$):** Aquesta aproximació és més precisa i utilitza un paràmetre intermedi `h`.
+    $$ h = \frac{(a - b)^2}{(a + b)^2} $${#eq-h-ramanujan}
+    $$ P_{RII} \approx \pi (a+b) \left( 1 + \frac{3h}{10 + \sqrt{4-3h}} \right) $${#eq-perimetre-ramanujan_ii}
+
+
+
+**Test Estadístic:** S'utilitzarà una **Prova de Wilcoxon per a Mostres Aparellades** per avaluar la diferència sistemàtica entre les diferents aproximacions del perímetre (p. ex., $P_1$ vs $P_{RI}$ i $P_{RII}$).
 
 # 5. Presentació de Resultats (Dashboard)
 

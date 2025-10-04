@@ -62,15 +62,14 @@ amphi_load_packages <- function(update_packages = FALSE) {
     'rlang', 'purrr', 'tidyr', 'missForest', 'psych',
     'DT', 'htmltools', 'knitr', 'webshot', 'webshot2', 'shiny',
     'gtsummary', 'gt', 'gtExtras', 'flextable', 'huxtable',
-    'crayon', 'janitor'
-  )
+    'crayon', 'janitor',
+    'rstatix', 'Hmisc')
 
   # Carrega o instal·la els paquets amb pacman
   pacman::p_load(
     char = packages_to_load,
     install = TRUE,
-    update = update_packages
-  )
+    update = update_packages)
   
   # Opcions addicionals de la sessió
   options(width = getOption('width'))

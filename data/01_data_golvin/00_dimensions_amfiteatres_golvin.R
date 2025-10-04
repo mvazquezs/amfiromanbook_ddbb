@@ -13,6 +13,7 @@
 #' @param filtrar_pais Lògic. Accepta noms de païssos moderns en anglès.
 #' @param seleccionar_columnes Selecciona les columnes desitjades per la sortida del dataframe.
 #' @param retornar_originals Lògic. Si és TRUE, retorna una llista amb els conjunts de dades originals i el fusionat. Si és FALSE, retorna només el conjunt de dades fusionat.
+#' @param format_llarg Lògic. Si és TRUE, el dataframe de sortida es retorna en format llarg (pivotat).
 #' 
 #' @return Un dataframe de R (o una llista de dataframes) amb les dades fusionades i estructurades dels amfiteatres romans i republicans.
 #' 
@@ -43,13 +44,17 @@
 #' #  filtrar_pais = NULL,
 #' #  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), 'bib'), 
 #' #  retornar_originals = FALSE)
+#'
+#' # Exemple 4: Carregar i pivotar les dades a format llarg
+#' # df_llarg <- load_dimensions_golvin(format_llarg = TRUE)
 #' 
 #' @export
 load_dimensions_golvin <- function(
   filtrar_provincia = NULL,
   filtrar_pais = NULL,
   seleccionar_columnes = NULL,
-  retornar_originals = FALSE) {
+  retornar_originals = FALSE,
+  format_llarg = FALSE) {
 
 ### Double Check 01
   if(!is.null(filtrar_provincia) && !is.null(filtrar_pais)) {
@@ -584,20 +589,41 @@ load_dimensions_golvin <- function(
       'tableau 30 amphitheatres a structure creuse',
       'tableau 31 amphitheatres mal connus')
 
+### Definir aquelles columnes númeriques
+### cols_int <- c('nomre_places', 'elevation_m')
+  cols_num <- c(
+    'amplada_arena', 'alcada_arena', 'amplada_general', 'alcada_general',
+    'nombre_places', 'amplada_cavea',  
+    'arena_max', 'arena_min', 'overall_max', 'overall_min',
+    'seat_est', 'cavea_wide', 'cavea_height', 
+    'arena_m2', 'overall_m2', 'cavea_m2',
+    'ratio_arena', 'ratio_general', 'ratio_cavea',
+    'superficie_arena', 'superfie_general',
+    'perimetre_arena', 'perimetre_general')
+
+  cols_chr <- c(
+    'place', 'phase', 'nom', 'hackett_class', 
+    'index_id', 'vasa_class', 't_building', 'dinasty_gr', 
+    'pais', 'lat', 'long', 'provincia_romana', 'variable', 'bib')
+
     
-    for(i in seq_along(l_tableau)) {
+  for(i in seq_along(l_tableau)) {
     
-      l_tableau[[i]] <- l_tableau[[i]] %>%
-        dplyr::mutate(
-          ratio_arena = amplada_arena / alcada_arena,
-          ratio_general = amplada_general / alcada_general,
-          superficie_arena = amplada_arena / 2 * alcada_arena / 2 * pi,
-          superficie_general = amplada_general / 2 * alcada_general / 2 * pi,
-          superficie_cavea = superficie_general - superficie_arena,
-          perimetre_arena = pi * (amplada_arena / 2 + alcada_arena / 2),
-          perimetre_general = pi * (amplada_general / 2 + alcada_general / 2),
-          ratio_cavea = superficie_arena / superficie_general,
-          bib = '1988_golvin')
+    l_tableau[[i]] <- l_tableau[[i]] %>%
+      dplyr::mutate(
+        ratio_arena = amplada_arena / alcada_arena,
+        ratio_general = amplada_general / alcada_general,
+        superficie_arena = amplada_arena / 2 * alcada_arena / 2 * pi,
+        superficie_general = amplada_general / 2 * alcada_general / 2 * pi,
+        superficie_cavea = superficie_general - superficie_arena,
+        perimetre_arena = pi * (amplada_arena / 2 + alcada_arena / 2),
+        perimetre_general = pi * (amplada_general / 2 + alcada_general / 2),
+        ratio_cavea = superficie_arena / superficie_general,
+        bib = '1988_golvin') %>%
+      dplyr::mutate(
+        across(any_of(cols_num), as.double)) %>%  
+      dplyr::mutate(
+        across(any_of(cols_chr), as.character)) 
 
     ### Argument 'filtrar_provincia'
       if(!is.null(filtrar_provincia) & is.null(filtrar_pais)) {
@@ -627,6 +653,29 @@ load_dimensions_golvin <- function(
 
         }
     }
+
+### Transforma format_ample en format_llarg
+   if(isTRUE(format_llarg) & !rlang::quo_is_null(seleccionar_columnes)) {
+    # Pivota només les columnes de la selecció de l'usuari que siguin numèriques,
+    # evitant errors en intentar combinar diferents tipus de dades.
+    l_tableau <- purrr::map(l_tableau, ~ .x %>%
+        tidyr::pivot_longer(
+          cols = c(!!seleccionar_columnes) & where(is.numeric),
+          names_to = 'variable',
+          values_to = 'valor',
+          values_drop_na = FALSE))
+    
+    } else {
+
+      l_tableau <- purrr::map(l_tableau, ~ .x %>%
+        tidyr::pivot_longer(
+          cols = where(is.numeric) | where(is.integer),
+          names_to = 'variable',
+          values_to = 'valor',
+          values_drop_na = FALSE))
+
+    }
+
 
 ### Fusió de les dues taules per la columna 'nom' i 'original_id'
   taula_fusionada <- dplyr::bind_rows(l_tableau) %>%
