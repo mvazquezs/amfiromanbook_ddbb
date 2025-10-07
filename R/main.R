@@ -26,22 +26,6 @@ df_ample_vazq <- load_dimensions_vazquez(
   retornar_originals = FALSE,
   format_llarg = FALSE)
 
-df_llarg_golv <- load_dimensions_golvin(
-  filtrar_provincia = c('hispania', 'panonia', 'britania'),
-  filtrar_pais = NULL,
-  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), 'bib'),
-  retornar_originals = FALSE,
-  format_llarg = TRUE)
-
-df_llarg_vazq <- load_dimensions_vazquez(
-  filtrar_edifici = 'amphitheater',
-  filtrar_provincia = c('hispania', 'panonia', 'britania'),
-  filtrar_pais = NULL,
-  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), 'bib'),
-  retornar_originals = FALSE,
-  format_llarg = TRUE)
-
-
 ### Taula descriptiva 'Vazquez original'
 tab_01_ori_vazq <- tab_summary(
     df = df_ample_vazq,
@@ -56,3 +40,39 @@ tab_01_ori_vazq <- tab_summary(
     digits = 2)
 
 ### Per test de comparació
+df_out <- df_ample_vazq
+
+seleccio_variables <- c(contains('amplada'), contains('alcada'))
+grup_by <- 'nom'
+grup_by_reserva <- 'provincia_romana'
+metode_imputacio <- 'truncada'
+valor_trim <- 0.2
+
+tab_02_trunc <- imputacio_estadistics(
+  df = df_ample_vazq,
+  seleccio_variables = c(contains('amplada'), contains('alcada')),
+  grup_by = 'nom',
+  grup_by_reserva = NULL,
+  metode_imputacio = 'truncada',
+  valor_trim = 0.1,
+  report_imputacio = TRUE,
+  retornar_original = TRUE)
+
+df_out <- df_ample_vazq
+
+seleccio_variables <- c('amplada_general', 'amplada_arena', 'alcada_arena', 'alcada_general')
+grup_by <- 'nom'
+grup_by_reserva <- 'provincia_romana'
+
+tab_02_missforest <- imputacio_missforest(
+  df = df_ample_vazq,
+  seleccio_variables = c(contains('amplada'), contains('alcada')),
+  grup_by <- 'nom',
+  grup_by_reserva <- 'provincia_romana',
+  optim_mtry = TRUE,
+  ntree = 100,
+  maxiter = 10,
+  verbose = TRUE,
+  set_seed = 19810424,
+  report_imputacio = FALSE,
+  retornar_original = TRUE)

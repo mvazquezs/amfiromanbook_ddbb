@@ -687,7 +687,6 @@ load_dimensions_golvin <- function(
     
     }
 
-
 ### Fusió de les dues taules per la columna 'nom' i 'original_id'
   taula_fusionada <- dplyr::bind_rows(l_tableau) %>%
     dplyr::arrange('index_id', 'nom',  'provincia_romana', 'pais')

@@ -167,7 +167,12 @@ tab_summary <- function(
       dplyr::mutate(variable = as.factor(variable)) %>%
       dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
       dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
-    
+
+      # missatge
+      cat(
+        crayon::bold(crayon::blue('i')),
+        crayon::black(' Taula resum creada en format matriu de dades\n'))
+          
     return(df_tab_all)
     
   } else {
@@ -177,6 +182,11 @@ tab_summary <- function(
     l_tab_all[[i]] <- l_tab_all[[i]] %>%
       dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
       dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+
+      # missatge
+      cat(
+        crayon::bold(crayon::blue('i')),
+        crayon::black(' Taules resum creades en format llistat de matriu de dades\n'))
 
   }
     
