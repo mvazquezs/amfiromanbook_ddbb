@@ -45,8 +45,8 @@ tab_02_trunc <- imputacio_estadistics(
   seleccio_variables = c(contains('amplada'), contains('alcada')),
   grup_by = 'nom',
   grup_by_reserva = 'provincia_romana',
-  metode_imputacio = 'truncada',
-  valor_trim = 0.1,
+  metode_imputacio = 'geometrica',
+  valor_trim = NULL,
   report_imputacio = TRUE,
   retornar_original = TRUE)
 
