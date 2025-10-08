@@ -40,29 +40,15 @@ tab_01_ori_vazq <- tab_summary(
     digits = 2)
 
 ### Per test de comparació
-df_out <- df_ample_vazq
-
-seleccio_variables <- c(contains('amplada'), contains('alcada'))
-grup_by <- 'nom'
-grup_by_reserva <- 'provincia_romana'
-metode_imputacio <- 'truncada'
-valor_trim <- 0.2
-
 tab_02_trunc <- imputacio_estadistics(
   df = df_ample_vazq,
   seleccio_variables = c(contains('amplada'), contains('alcada')),
   grup_by = 'nom',
-  grup_by_reserva = NULL,
+  grup_by_reserva = 'provincia_romana',
   metode_imputacio = 'truncada',
   valor_trim = 0.1,
   report_imputacio = TRUE,
   retornar_original = TRUE)
-
-df_out <- df_ample_vazq
-
-seleccio_variables <- c('amplada_general', 'amplada_arena', 'alcada_arena', 'alcada_general')
-grup_by <- 'nom'
-grup_by_reserva <- 'provincia_romana'
 
 tab_02_missforest <- imputacio_missforest(
   df = df_ample_vazq,

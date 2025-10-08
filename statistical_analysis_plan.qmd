@@ -28,7 +28,10 @@ L'anàlisi se centrarà en els següents objectius clau:
     *   La base de dades de **Jean-Claude Golvin**, considerada una referència amb dades úniques per amfiteatre.
     *   La base de dades de **Miguel Vázquez**, que agrega dades de múltiples fonts, presentant reptes com valors duplicats, discrepàncies i dades absents.
 
-2.  **Gestió de Dades Absents:** Implementar i avaluar mètodes d'imputació avançats (`missForest`, `MICE`) per tractar els valors perduts (`NA`) a la base de dades de Vázquez, amb l'objectiu de crear un conjunt de dades complet i robust per a l'anàlisi multivariant.
+2.  **Gestió de Dades Absents:** Implementar i avaluar diferents mètodes d'imputació per tractar els valors perduts (`NA`) a la base de dades de Vázquez, amb l'objectiu de crear un conjunt de dades complet i robust per a l'anàlisi multivariant.
+
+    *   Mètodes d'imputació basats en estadístics de centralitat 
+    *   Mètodes d'imputació avançats, en una primera etapa (`missForest`), i en una segona etapa (`MICE`).
 
 3.  **Anàlisi de Tipologies Arquitectòniques:** Investigar l'existència de clústers o tipologies d'amfiteatres mitjançant un **Anàlisi de Clustering Jeràrquic Aglomeratiu**, basat en les seves dimensions principals i ràtios derivades.
 
