@@ -64,9 +64,22 @@ tab_02_ori_vazq <- tab_summary(
     bind_rows = FALSE,
     digits = 2)
 
-### Taula descriptiva 'Vazquez geometrica'
+### Taula descriptiva 'mitjana geometrica'
 tab_03_geom_vazq <- tab_summary(
     df = tab_01_geom$imputed_df,
+    grup_by = 'nom',
+    seleccio_variables = c(contains('amplada'), contains('alcada'), -contains('flag_')),
+    stats_adicionals = TRUE,
+    sd_num = 2,
+    q_lower = 0.1,
+    q_upper = 0.99,
+    na.rm = TRUE,
+    bind_rows = FALSE,
+    digits = 2)
+
+### Taula descriptiva 'missforest'
+tab_03_geom_vazq <- tab_summary(
+    df = tab_01_missforest$imputed_df,
     grup_by = 'nom',
     seleccio_variables = c(contains('amplada'), contains('alcada'), -contains('flag_')),
     stats_adicionals = TRUE,
