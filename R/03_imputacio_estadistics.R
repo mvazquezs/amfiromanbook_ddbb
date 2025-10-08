@@ -52,6 +52,9 @@ imputacio_estadistics <- function(
 ### Renomena df
   df_original <- df
 
+### Add row id for reordering at the end
+  df_out <- df_original %>% dplyr::mutate(.row_id = dplyr::row_number())
+
 ### 'Quositation' de les variables clau
   grup_by_sym <- rlang::ensym(grup_by)
   grup_by_reserva_sym <- rlang::ensym(grup_by_reserva)
@@ -60,7 +63,7 @@ imputacio_estadistics <- function(
 ### Validació d'arguments i preparació
   metode_imputacio <- match.arg(metode_imputacio)
   
-  df_out <- df_original %>%
+  df_out <- df_out %>%
     dplyr::mutate(dplyr::across(!!seleccio_variables_enquo, as.numeric))
 
 ### Creació de les flags (inicialitzades a 0)
@@ -202,16 +205,15 @@ imputacio_estadistics <- function(
   }
 
 ### Sortida
-  # Eliminar les columnes d'agrupació si s'han utilitzat
-  cols_to_remove <- c() # Inicialitzem el vector de columnes a eliminar
-  if (!rlang::is_missing(grup_by_sym)) {
-    cols_to_remove <- c(cols_to_remove, rlang::as_string(grup_by_sym))
-  }
-  if (!rlang::is_missing(grup_by_reserva_sym)) {
-    cols_to_remove <- c(cols_to_remove, rlang::as_string(grup_by_reserva_sym))
-  }
-  
-  result <- list(imputed_df = df_out %>% dplyr::select(-dplyr::any_of(cols_to_remove)))
+  # Reorder rows to match original and select columns
+  original_cols <- names(df_original)
+  flag_cols <- names(df_out) %>% stringr::str_subset("^flag_")
+
+  df_out <- df_out %>%
+    dplyr::arrange(.row_id) %>%
+    dplyr::select(all_of(original_cols), all_of(flag_cols))
+
+  result <- list(imputed_df = df_out)
   
   if (isTRUE(retornar_original)) {
     result$original_df <- df_original

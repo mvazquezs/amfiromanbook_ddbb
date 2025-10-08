@@ -26,25 +26,28 @@ imputacio_missforest <- function(
   verbose = FALSE,
   set_seed = 19810424,
   report_imputacio = TRUE,
-  retorna_original = FALSE)
+  retornar_original = FALSE)
 {
   ### 'Quositation'
-  grup_by_enquo <- rlang::enquo(grup_by)
-  grup_by_reserva_enquo <- rlang::enquo(grup_by_reserva)
-  seleccio_variables_enquo <- rlang::enquo(seleccio_variables)
+  grup_by_sym <- rlang::ensym(grup_by)
+  grup_by_reserva_sym <- rlang::ensym(grup_by_reserva)
+  seleccio_variables_enquo <- rlang::enquo(seleccio_variables) # Mantenim enquo per seleccions complexes
   
+  df_original <- df
+
   ### Preparació del data frame
-  df_out <- df %>%
+  df_out <- df_original %>%
+    dplyr::mutate(.row_id = dplyr::row_number()) %>%
     dplyr::mutate(
       dplyr::across(!!seleccio_variables_enquo, as.numeric),
-      dplyr::across(-c(!!seleccio_variables_enquo), as.factor)
+      dplyr::across(-dplyr::any_of(names(dplyr::select(., !!seleccio_variables_enquo))), as.factor)
     )
   
   ### Creació de les flags (inicialitzades a 0)
+  impute_vars_names <- df_out %>% dplyr::select(!!seleccio_variables_enquo) %>% names()
+  
   df_out <- df_out %>%
-    dplyr::mutate(
-      dplyr::across(!!seleccio_variables_enquo, ~0, .names = "flag_{.col}")
-    )
+    dplyr::mutate(dplyr::across(all_of(impute_vars_names), ~0, .names = 'flag_{.col}'))
   
   #' @title Funció interna per executar missForest
   #' @description Envolta la funció `missForest::missForest` per gestionar l'optimització
@@ -82,41 +85,74 @@ imputacio_missforest <- function(
     na_originals_per_var <- df_out %>%
       dplyr::select(!!seleccio_variables_enquo) %>%
       purrr::map_df(~sum(is.na(.))) %>%
-      tidyr::pivot_longer(cols = dplyr::everything(), names_to = "variable", values_to = "na_originals")
+      tidyr::pivot_longer(cols = dplyr::everything(), names_to = "variable", values_to = "n_na_ori")
     report_list$estat_inicial <- na_originals_per_var
   }
   
   ### Lògica d'imputació
-  if (rlang::quo_is_null(grup_by_enquo)) {
-    # Imputació global
+  if (rlang::is_missing(grup_by_sym)) {
+    # 3. Imputació global (if no group_by specified or still NAs)
     if(sum(is.na(df_out %>% dplyr::select(!!seleccio_variables_enquo))) > 0) {
-      df_out <- df_out %>%
-        dplyr::mutate(dplyr::across(!!seleccio_variables_enquo, ~ifelse(is.na(.), 1, get(paste0("flag_", dplyr::cur_column()))), .names = "flag_{.col}"))
-      
+      # Get current NA status of impute_vars
+      na_status_before_imputation <- df_out %>% dplyr::select(all_of(impute_vars_names)) %>% is.na()
+      # Get current flag values
+      current_flags_df <- df_out %>% dplyr::select(starts_with("flag_"))
+
+      # Impute
       cols_to_impute <- df_out %>% dplyr::select(!!seleccio_variables_enquo)
-      missforest_result <- safe_f_missforest(as.data.frame(cols_to_impute), optim = optim_mtry, ntree = ntree, maxiter = maxiter, verbose = verbose)
+      missforest_result <- suppressWarnings(safe_f_missforest(as.data.frame(cols_to_impute), optim = optim_mtry, ntree = ntree, maxiter = maxiter, verbose = verbose))
       
       if (!is.null(missforest_result)) {
-        df_out[, names(cols_to_impute)] <- imputed_missforest$ximp
+        df_out[, names(cols_to_impute)] <- missforest_result$ximp
+
+        # Update flags for values that were NA and had flag 0
+        for (col_name in impute_vars_names) {
+          flag_col_name <- paste0("flag_", col_name)
+          df_out[[flag_col_name]] <- ifelse(
+            na_status_before_imputation[, col_name] & current_flags_df[[flag_col_name]] == 0,
+            3, # Flag for global imputation
+            df_out[[flag_col_name]] # Keep existing flag
+          )
+        }
       }
     }
   } else {
     # Imputació per grup_by
     df_out <- df_out %>%
-      dplyr::group_by(!!grup_by_enquo) %>%
-      dplyr::mutate(dplyr::across(!!seleccio_variables_enquo, ~ifelse(is.na(.), 1, get(paste0("flag_", dplyr::cur_column()))), .names = "flag_{.col}")) %>%
+      dplyr::group_by(!!grup_by_sym) %>%
       tidyr::nest()
       
     nested_data <- df_out %>%
       dplyr::mutate(
         imputed_data = purrr::map(data, ~{
           df_to_impute <- .x
-          if (any(is.na(df_to_impute %>% dplyr::select(!!seleccio_variables_enquo)))) {
-            cols_to_impute <- df_to_impute %>% dplyr::select(!!seleccio_variables_enquo)
-            imputed_missforest <- safe_f_missforest(as.data.frame(cols_to_impute), optim = optim_mtry, ntree = ntree, maxiter = maxiter, verbose = verbose)
-            if (!is.null(imputed_missforest)) {
-              df_to_impute[, names(cols_to_impute)] <- imputed_missforest$ximp
-            }
+          
+          na_status_before_imputation <- df_to_impute %>% dplyr::select(dplyr::any_of(impute_vars_names)) %>% is.na()
+          current_flags_df <- df_to_impute %>% dplyr::select(starts_with("flag_"))
+          
+          cols_to_impute <- df_to_impute %>% dplyr::select(dplyr::any_of(impute_vars_names))
+
+          if (ncol(cols_to_impute) > 0 && any(na_status_before_imputation)) {
+              imputed_missforest <- suppressWarnings(safe_f_missforest(as.data.frame(cols_to_impute), optim = optim_mtry, ntree = ntree, maxiter = maxiter, verbose = verbose))
+              
+              if (!is.null(imputed_missforest)) {
+                # Assign back by name to avoid dimension mismatch if missForest drops a column
+                for(col in names(imputed_missforest$ximp)) {
+                  df_to_impute[[col]] <- imputed_missforest$ximp[[col]]
+                }
+                
+                # Update flags
+                for (col_name in names(cols_to_impute)) {
+                  flag_col_name <- paste0("flag_", col_name)
+                  if (flag_col_name %in% names(df_to_impute)) {
+                    df_to_impute[[flag_col_name]] <- ifelse(
+                      na_status_before_imputation[, col_name] & current_flags_df[[flag_col_name]] == 0,
+                      1, # Flag for grup_by
+                      df_to_impute[[flag_col_name]]
+                    )
+                  }
+                }
+              }
           }
           df_to_impute
         })
@@ -137,22 +173,42 @@ imputacio_missforest <- function(
     }
     
     # Imputació per grup_by_reserva
-    if (any(is.na(df_out %>% dplyr::select(!!seleccio_variables_enquo))) && !rlang::quo_is_null(grup_by_reserva_enquo)) {
+    if (any(is.na(df_out %>% dplyr::select(!!seleccio_variables_enquo))) && !rlang::is_missing(grup_by_reserva_sym)) {
       df_out <- df_out %>%
-        dplyr::group_by(!!grup_by_reserva_enquo) %>%
-        dplyr::mutate(dplyr::across(!!seleccio_variables_enquo, ~ifelse(is.na(.), 2, get(paste0("flag_", dplyr::cur_column()))), .names = "flag_{.col}")) %>%
+        dplyr::group_by(!!grup_by_reserva_sym) %>%
         tidyr::nest()
 
       nested_data_reserva <- df_out %>%
         dplyr::mutate(
           imputed_data = purrr::map(data, ~{
             df_to_impute <- .x
-            if (any(is.na(df_to_impute %>% dplyr::select(!!seleccio_variables_enquo)))) {
-              cols_to_impute <- df_to_impute %>% dplyr::select(!!seleccio_variables_enquo)
-              imputed_missforest <- safe_f_missforest(as.data.frame(cols_to_impute), optim = optim_mtry, ntree = ntree, maxiter = maxiter, verbose = verbose)
-              if (!is.null(imputed_missforest)) {
-                df_to_impute[, names(cols_to_impute)] <- imputed_missforest$ximp
-              }
+            
+            na_status_before_imputation <- df_to_impute %>% dplyr::select(dplyr::any_of(impute_vars_names)) %>% is.na()
+            current_flags_df <- df_to_impute %>% dplyr::select(starts_with("flag_"))
+            
+            cols_to_impute <- df_to_impute %>% dplyr::select(dplyr::any_of(impute_vars_names))
+
+            if (ncol(cols_to_impute) > 0 && any(na_status_before_imputation)) {
+                imputed_missforest <- suppressWarnings(safe_f_missforest(as.data.frame(cols_to_impute), optim = optim_mtry, ntree = ntree, maxiter = maxiter, verbose = verbose))
+                
+                if (!is.null(imputed_missforest)) {
+                  # Assign back by name to avoid dimension mismatch if missForest drops a column
+                  for(col in names(imputed_missforest$ximp)) {
+                    df_to_impute[[col]] <- imputed_missforest$ximp[[col]]
+                  }
+                  
+                  # Update flags
+                  for (col_name in names(cols_to_impute)) {
+                    flag_col_name <- paste0("flag_", col_name)
+                    if (flag_col_name %in% names(df_to_impute)) {
+                      df_to_impute[[flag_col_name]] <- ifelse(
+                        na_status_before_imputation[, col_name] & current_flags_df[[flag_col_name]] == 0,
+                        2, # Flag for grup_by_reserva
+                        df_to_impute[[flag_col_name]]
+                      )
+                    }
+                  }
+                }
             }
             df_to_impute
           })
@@ -176,37 +232,49 @@ imputacio_missforest <- function(
   
   ### Muntatge del report final
   if (isTRUE(report_imputacio) && length(report_list) > 0) {
-    report_final <- purrr::reduce(report_list, dplyr::full_join, by = "variable") %>%
+    report <- purrr::reduce(report_list, dplyr::full_join, by = "variable")
+
+    na_finals <- df_out %>%
+      dplyr::select(!!seleccio_variables_enquo) %>%
+      purrr::map_df(~sum(is.na(.))) %>%
+      tidyr::pivot_longer(cols = dplyr::everything(), names_to = "variable", values_to = "n_na_finals")
+    report <- dplyr::left_join(report, na_finals, by = "variable")
+
+    report <- report %>%
       dplyr::mutate(
-        na_post_grup_by = ifelse(is.null(grup_by_enquo), na_originals, na_post_grup_by),
-        imputats_grup_by = na_originals - dplyr::coalesce(na_post_grup_by, na_originals),
-        imputats_reserva = dplyr::coalesce(na_post_grup_by, 0) - dplyr::coalesce(na_post_reserva, 0),
-        na_finals = dplyr::coalesce(na_post_reserva, na_post_grup_by, na_originals)
-      ) %>%
+        n_imp_grup = if ("na_post_grup_by" %in% names(.)) n_na_ori - na_post_grup_by else 0,
+        n_imp_reserva = if (all(c("na_post_grup_by", "na_post_reserva") %in% names(.))) na_post_grup_by - na_post_reserva else 0
+      )
+
+    report_totals <- report %>%
+      dplyr::summarise(
+        variable = "Total",
+        n_na_ori = sum(n_na_ori, na.rm = TRUE),
+        n_imp_grup = sum(n_imp_grup, na.rm = TRUE),
+        n_imp_reserva = sum(n_imp_reserva, na.rm = TRUE),
+        n_na_finals = sum(n_na_finals, na.rm = TRUE)
+      )
+
+    report <- dplyr::bind_rows(report, report_totals) %>%
       dplyr::select(
         variable, 
-        na_originals, 
-        imputats_grup_by, 
-        imputats_reserva, 
-        na_finals
-      )
-    
-    resum <- tibble::tibble(
-      na_originals_total = sum(report_final$na_originals, na.rm = TRUE),
-      na_imputats_total = sum(report_final$imputats_grup_by, na.rm = TRUE) + sum(report_final$imputats_reserva, na.rm = TRUE),
-      na_finals_total = sum(report_final$na_finals, na.rm = TRUE)
-    )
-    
-    report <- list(resum_general = resum, detall_per_variable = report_final)
-  } else {
-    report <- NULL
+        n_na_ori, n_imp_grup, n_imp_reserva, n_na_finals) %>%
+        dplyr::filter(!str_detect(variable, pattern = "flag_"))
   }
 
   ### Sortida
+  # Reorder rows to match original and select columns
+  original_cols <- names(df_original)
+  flag_cols <- names(df_out) %>% stringr::str_subset("^flag_")
+
+  df_out <- df_out %>%
+    dplyr::arrange(.row_id) %>%
+    dplyr::select(all_of(original_cols), all_of(flag_cols))
+
   result <- list(imputed_df = df_out)
   
-  if (isTRUE(retorna_original)) {
-    result$original_df <- df
+  if (isTRUE(retornar_original)) {
+    result$original_df <- df_original
   }
   
   if (isTRUE(report_imputacio)) {
