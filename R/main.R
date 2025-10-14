@@ -5,6 +5,7 @@ source('data/02_data_vazquez/00_dimensions_amfiteatres_vazquez.R')
 source('R/02_tab_summary.R')
 source('R/03_imputacio_estadistics.R')
 source('R/03_imputacio_missforest.R')
+source('R/04_stats_bitest.R')
 
 
 ### carrega del setup
@@ -23,7 +24,7 @@ df_ample_vazq <- load_dimensions_vazquez(
   filtrar_edifici = 'amphitheater',
   filtrar_provincia = c('hispania', 'panonia', 'britania'),
   filtrar_pais = NULL,
-  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), 'bib'),
+  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), -'bib'),
   retornar_originals = FALSE,
   format_llarg = FALSE)
 
@@ -52,16 +53,14 @@ tab_01_missforest <- imputacio_missforest(
   retornar_original = TRUE)
 
 ### Taula descriptiva 'Vazquez original'
-tab_02_ori_vazq <- tab_summary(
+tab_03_ori_vazq <- tab_summary(
     df = df_ample_vazq,
     grup_by = 'nom',
     seleccio_variables = c(contains('amplada'), contains('alcada')),
-    stats_adicionals = TRUE,
-    sd_num = 2,
-    q_lower = 0.1,
-    q_upper = 0.99,
+    addicio_info = c('index_id', 'provincia_romana', 'pais'),
+    stats_adicionals = FALSE,
     na.rm = TRUE,
-    bind_rows = FALSE,
+    bind_rows = TRUE,
     digits = 2)
 
 ### Taula descriptiva 'mitjana geometrica'
@@ -69,23 +68,79 @@ tab_03_geom_vazq <- tab_summary(
     df = tab_01_geom$imputed_df,
     grup_by = 'nom',
     seleccio_variables = c(contains('amplada'), contains('alcada'), -contains('flag_')),
-    stats_adicionals = TRUE,
-    sd_num = 2,
-    q_lower = 0.1,
-    q_upper = 0.99,
+    addicio_info = c('index_id', 'provincia_romana', 'pais'),
+    stats_adicionals = FALSE,
     na.rm = TRUE,
-    bind_rows = FALSE,
+    bind_rows = TRUE,
     digits = 2)
 
 ### Taula descriptiva 'missforest'
-tab_03_geom_vazq <- tab_summary(
+tab_03_miss_vazq <- tab_summary(
     df = tab_01_missforest$imputed_df,
     grup_by = 'nom',
     seleccio_variables = c(contains('amplada'), contains('alcada'), -contains('flag_')),
-    stats_adicionals = TRUE,
-    sd_num = 2,
-    q_lower = 0.1,
-    q_upper = 0.99,
+    addicio_info = c('index_id', 'provincia_romana', 'pais'),
+    stats_adicionals = FALSE,
     na.rm = TRUE,
-    bind_rows = FALSE,
+    bind_rows = TRUE,
     digits = 2)
+
+
+### ===================================================================
+### EXEMPLE D'ÚS PER A stats_bitest AMB 4 DATASETS
+### ===================================================================
+
+# --- 1. Preparació dels Dataframes ---
+
+# Assegurem-nos que tenim tots els objectes necessaris a l'entorn,
+# executant el codi de 'main.R' si cal.
+
+# DF1: Dades en brut (format llarg).
+# Utilitzem la funció de càrrega per obtenir les dades de Golvin en format llarg.
+df_llarg_golv <- load_dimensions_golvin(
+  filtrar_provincia = c('hispania', 'panonia', 'britania'),
+  format_llarg = TRUE # Important: format llarg per a les dades en brut
+)
+
+# DF2: Resum estadístic de les dades originals de Vazquez.
+# Aquest ja el tens creat a 'main.R'.
+# tab_03_ori_vazq
+
+# DF3: Resum estadístic de les dades imputades amb mitjana geomètrica.
+# Aquest ja el tens creat a 'main.R'.
+# tab_03_geom_vazq
+
+# DF4: Resum estadístic de les dades imputades amb MissForest.
+# Aquest ja el tens creat a 'main.R'.
+# tab_03_miss_vazq
+
+
+# --- 2. Execució de la funció stats_bitest ---
+
+# Cridem la funció passant els 4 dataframes.
+# Volem comparar les distribucions per a cada 'provincia_romana'.
+# Utilitzarem el test de Kruskal-Wallis, ja que comparem més de 2 grups (els 4 datasets).
+# Ajustarem els p-valors amb el mètode 'BH'.
+
+cat("Executant stats_bitest per comparar 4 datasets...\n")
+
+resultats_comparacio <- stats_bitest(
+  df_llarg_golv,      # Dataset 1: Dades en brut
+  tab_03_ori_vazq,    # Dataset 2: Resum originals
+  tab_03_geom_vazq,   # Dataset 3: Resum imputació geomètrica
+  tab_03_miss_vazq,   # Dataset 4: Resum imputació MissForest
+  grup_by = provincia_romana,
+  stat_tests = 'kruskal_wallis',
+  adjust_method = 'BH',
+  grup_by_adjust = provincia_romana
+)
+
+# --- 3. Visualització dels resultats ---
+
+cat("Resultats obtinguts:\n")
+print(resultats_comparacio)
+
+# Podem veure els resultats per a una variable específica, per exemple 'amplada_general'
+cat("\nResultats filtrats per a 'amplada_general':\n")
+print(resultats_comparacio %>% filter(variable_base == 'amplada_general'))
+

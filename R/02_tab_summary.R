@@ -6,6 +6,7 @@
 #' @param df El `data.frame` o `tibble` d'entrada.
 #' @param seleccio_variables Les variables numèriques a analitzar. Es pot utilitzar la sintaxi de selecció de `dplyr` (per exemple, `starts_with("var")`, `contains("grup")`).
 #' @param grup_by Les variables per agrupar les dades. També pot utilitzar la sintaxi de selecció de `dplyr`. Si es deixa com a `NULL`, les estadístiques es calculen per a tot el `data.frame`.
+#' @param addicio_info Columnes addicionals del dataframe original per incloure a la taula de resultats. Útil per afegir informació contextual que és constant dins de cada grup.
 #' @param stats_adicionals Un vector de caràcters per especificar estadístiques addicionals a calcular. Les opcions inclouen: "shapiro" (per al test de Shapiro-Wilk), "skewness" (asimetria) i "kurtosis" (curtosi).
 #' @param q_lower Un valor numèric per a calcular un quantil de límit inferior.
 #' @param q_upper Un valor numèric per a calcular un quantil de límit superior.
@@ -54,6 +55,7 @@
 tab_summary <- function(
     df,
     grup_by = NULL,
+    addicio_info = NULL,
     seleccio_variables,
     stats_adicionals = FALSE,
     sd_num = NULL,
@@ -66,6 +68,7 @@ tab_summary <- function(
   ### Captura les expressions de selecció de l'usuari amb enquo
   sel_exp_variables <- rlang::enquo(seleccio_variables)
   grup_exp_by <- rlang::enquo(grup_by)
+  addicio_info_quo <- rlang::enquo(addicio_info)
   
   ### Obté els noms de les columnes per al bucle lapply
   sel_vars_names <- names(
@@ -160,13 +163,33 @@ tab_summary <- function(
   
   }
   
+  ### Argument 'addicio_info' per afegir columnes addicionals
+  if (!rlang::quo_is_null(addicio_info_quo) && !is.null(grup_by)) {
+   
+    df_info <- df %>%
+      dplyr::select(!!grup_exp_by, !!addicio_info_quo) %>%
+      dplyr::distinct(dplyr::across(dplyr::all_of(group_cols_names)), .keep_all = TRUE)
+    
+    l_tab_all <- purrr::map(l_tab_all, function(x) {      
+      
+      x %>%
+        dplyr::left_join(
+          df_info, 
+          by = group_cols_names)
+    
+    })
+  }
+  ### Ordre de les columnes
+    cols_ordre_final <- c('index_id', 'nom', 'provincia_romana', 'pais', 'variable')
+  
   ### Retornar resultats
   if (isTRUE(bind_rows)) {
     
     df_tab_all <- dplyr::bind_rows(l_tab_all, .id = 'variable') %>%
       dplyr::mutate(variable = as.factor(variable)) %>%
       dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
-      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA))) %>%
+      dplyr::relocate(dplyr::any_of(cols_ordre_final))
 
       # missatge
       cat(
@@ -181,7 +204,9 @@ tab_summary <- function(
 
     l_tab_all[[i]] <- l_tab_all[[i]] %>%
       dplyr::mutate(dplyr::across(where(is.double), ~ round(., digits))) %>%
-      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA)))
+      dplyr::mutate(across(where(is.double), ~ ifelse(is.finite(.), ., NA))) %>%
+      dplyr::relocate(dplyr::any_of(cols_ordre_final))
+
 
       # missatge
       cat(
