@@ -1,5 +1,29 @@
 # Resultats
 
+## Configuració i Càrrega de Dades
+
+Abans de presentar els resultats, executem el codi necessari per carregar les llibreries i les dades, i per realitzar els càlculs d'imputació. Aquest bloc de codi no es mostrarà a l'informe final.
+
+```{r setup-and-load}
+#| label: setup-and-load
+#| include: false
+
+# Carreguem el paquet personalitzat 'amphitools' i les seves dependències
+library(amphitools)
+amphi_load_packages(update_packages = FALSE)
+
+# Carreguem les dades de Vázquez, filtrant per a l'anàlisi
+df_ample_vazq <- load_dimensions_vazquez(
+  filtrar_edifici = 'amphitheater',
+  filtrar_provincia = c('hispania', 'panonia', 'britania'),
+  seleccionar_columnes = c(contains('amplada'), contains('alcada'), -contains('cavea'), -'bib')
+)
+
+# Realitzem la imputació de dades perdudes
+tab_01_geom <- imputacio_estadistics(df = df_ample_vazq, seleccio_variables = c(contains('amplada'), contains('alcada')), grup_by = 'nom', metode_imputacio = 'geometrica')
+tab_01_missforest <- imputacio_missforest(df = df_ample_vazq, seleccio_variables = c(contains('amplada'), contains('alcada')), grup_by = 'nom', set_seed = 19810424)
+```
+
 En aquest capítol, presentem els resultats de l'anàlisi de les dimensions dels amfiteatres romans. L'exposició s'estructura en tres parts principals: una anàlisi descriptiva de les dades, el procés d'imputació de valors perduts i, finalment, l'anàlisi inferencial per a la comparació entre grups.
 
 ## Anàlisi Descriptiva
@@ -12,17 +36,15 @@ A la taula següent, es mostren les principals estadístiques descriptives per a
 
 ```{r tab-descriptius}
 #| label: tbl-descriptius
-#| tbl-cap: "Estadístiques descriptives de les dimensions dels amfiteatres."
+#| tbl-cap: "Estadístiques descriptives de les dimensions dels amfiteatres (dades originals de Vázquez)."
 
-# Aquí cridaries la teva funció tab_summary.
-# Assegura't que l'objecte 'df_amfiteatres' contingui les teves dades.
-# Per exemple:
-# tab_summary(
-#   df = df_amfiteatres,
-#   seleccio_variables = starts_with('amplada') | starts_with('alcada'),
-#   stats_adicionals = TRUE,
-#   digits = 2
-# )
+tab_03_ori_vazq <- tab_summary(
+    df = df_ample_vazq,
+    grup_by = 'nom',
+    seleccio_variables = c(contains('amplada'), contains('alcada')),
+    addicio_info = c('index_id', 'provincia_romana', 'pais'))
+
+gtsummary::tbl_summary(tab_03_ori_vazq %>% dplyr::select(-c(n, na)), by = variable)
 ```
 
 Aquesta taula inclou el nombre d'observacions, la mitjana, la desviació estàndard, els quartils i altres mètriques que ens informen sobre la distribució i la dispersió de cada variable.

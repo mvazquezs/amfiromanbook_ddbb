@@ -108,13 +108,45 @@ Es realitzarà una anàlisi descriptiva exhaustiva per a cada font de dades (`Go
 ## 4.2. Comparació de Fonts i Mètodes d'Imputació
 
 Es realitzarà una anàlisi inferencial per comparar les distribucions de les variables clau entre les tres fonts.
+*   **Variables i Mètriques:**
+    *   L'anàlisi es basarà en les dades de Golvin i Vázquez-Santiago originals i imputades.
+    *   **Variables Principals:** `amplada_general`, `alcada_general`, `amplada_arena`, `alcada_arena`.
+    *   **Variables Derivades:** `diff_amplada`, `diff_alcada`.
 
-*   **Tests Estadístics Globals:**
-    *   **ANOVA d'una via:** Si les dades segueixen una distribució normal i hi ha homocedasticitat.
-    *   **Test de Kruskal-Wallis:** Alternativa no paramètrica si no es compleixen els supòsits d'ANOVA.
-*   **Comparacions Múltiples Post-Hoc:**
-    *   `rstatix::pairwise_t_test` o `rstatix::wilcox_test` amb ajust de p-valor de **Benjamini-Hochberg (BH)** per controlar la taxa de falsos descobriments.
+### 4.2.1. Aproximació 1: Comparació de dades originals `Golvin` amb `Vázquez-Santiago`
+L'objectiu és trobar la diferència entre el valor constant de `Golvin` i els valors variables de `Vázquez-Santiago` dins dels mateixos grups.
 
+*   **Variables Numèriques:** `amplada_general`, `alcada_general`, `amplada_arena`, `alcada_arena`.
+*   **Variables Categòriques:** `nom` (aparellades) o `provincia_romana` (independents).
+
+| Aspecte          | Decisió Final                                       | Justificació                                                                                                                                      |
+|------------------|-----------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Tipus de Test**    | `wilcox_test` (Test dels Rangs Signats de Wilcoxon) | El test més adequat per a la comparació de dues mostres aparellades quan s'assumeix la no normalitat.                                             |
+| **Procediment Clau** | Test d'una mostra sobre la Diferència               | Es crea una nova columna de `Diferència = col_ori_1 - col_ori_2` i es compara la mediana d'aquesta diferència amb zero (μ=0) dins de cada grup. |
+
+### 4.2.2. Aproximació 2: Comparació de dades originals `Golvin` amb dades imputades `Vazquez-Santiago`.
+L'objectiu és trobar la diferència entre el valor constant de `Golvin` i els valors variables imputades de `Vázquez-Santiago` dins dels mateixos grups.
+
+*   **Variables Numèriques:** `amplada_general`, `alcada_general`, `amplada_arena`, `alcada_arena`.
+*   **Variables Categòriques:** `nom` (aparellades) o `provincia_romana` (independents).
+
+| Aspecte       | Decisió Final                          | Justificació                                                                              |
+|---------------|----------------------------------------|-------------------------------------------------------------------------------------------|
+| **Test Global** | `friedman_test` (Test de Friedman)     | Test no paramètric per comparar ≥3 mostres aparellades (Mesures Repetides).               |
+| **Post-hoc**    | `wilcox_test` (aparellat amb ajust p)  | Comparacions per parelles entre les condicions, adequat per a dades aparellades.          |
+| **Ajust p**     | Holm (`p.adjust.method = "holm"`)      | El mètode més potent per controlar l'Error de Tipus I (FWER) en comparacions múltiples. |
+
+### 4.2.3. Aproximació 3: Comparació de dades originals `Vázquez-Santiago` amb dades imputades `Vazquez-Santiago`.
+L'objectiu és trobar la diferència entre el valors diversos i originals de `Vázquez-Santiago` i els valors variables imputades de `Vázquez-Santiago` dins dels mateixos grups.
+
+*   **Variables Numèriques:** `amplada_general`, `alcada_general`, `amplada_arena`, `alcada_arena`.
+*   **Variables Categòriques:** `nom` (aparellades) o `provincia_romana` (independents).
+
+| Aspecte       | Decisió Final                         | Justificació                                                    |
+|---------------|---------------------------------------|-----------------------------------------------------------------|
+| **Test Global** | `kruskal_test` (Test de Kruskal-Wallis) | Test no paramètric per comparar ≥3 mostres independents.        |
+| **Post-hoc**    | `dunn_test` (Test de Dunn)              | El test post-hoc dissenyat per anar després del Kruskal-Wallis. |
+| **Ajust p**     | Holm (`p.adjust.method = "holm"`)       | Igualment recomanat per la seva potència i control de l'error.  |
 ## 4.3. Anàlisi de Clústers
 
 S'aplicarà un **Anàlisi de Clustering Jeràrquic Aglomeratiu** per identificar tipologies d'amfiteatres.
