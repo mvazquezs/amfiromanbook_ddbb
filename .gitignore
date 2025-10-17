@@ -32,7 +32,7 @@ _quarto/
 *.json
 
 ## Fitxers d'IDE
-amfiromanbook_ddbb.Rproj
+amphibook.Rproj
 .Rproj
 .Rhistory
 .RData
